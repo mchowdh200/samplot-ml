@@ -2,8 +2,7 @@ import numpy as np
 import tensorflow as tf
 from utils import get_dataset
 
-def conv2Dmodel(input_shape=None):
-
+def conv2Dmodel():
     model = tf.keras.Sequential([
         tf.keras.layers.Conv2D(#input_shape=input_shape,
                                filters=64,
@@ -23,8 +22,12 @@ def conv2Dmodel(input_shape=None):
 
 if __name__ == '__main__':
     BATCH_SIZE = 32
-    ds, n_images = get_dataset(batch_size=BATCH_SIZE)
+    training_set, n_train = get_dataset(batch_size=BATCH_SIZE, training=True)
+    test_set, n_test = get_dataset(batch_size=BATCH_SIZE, training=False)
+
     model = conv2Dmodel()
-    model.fit(ds,
-              steps_per_epoch=np.ceil(n_images/BATCH_SIZE),
+    model.fit(training_set,
+              steps_per_epoch=np.ceil(n_train/BATCH_SIZE),
+              validation_data=test_set,
+              validation_steps=np.ceil(n_test/BATCH_SIZE),
               epochs=10)

@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.model_selection import train_test_split
 
 
 def get_filenames(df):
@@ -30,12 +31,18 @@ def load_image(path, label):
     return tf.image.decode_png(image, channels=3)/255, label
 
 
-def get_dataset(data_dir='./data', batch_size=32):
+def get_dataset(data_dir='./data', training=True, batch_size=32):
     """
     Create a tensorflow dataset that yields image/label pairs to a model
     """
 
-    df = pd.read_csv(f"{data_dir}/mean_score.bed", sep='\t',
+    if training:
+        train_test = 'train'
+    else:
+        train_test = 'test'
+
+
+    df = pd.read_csv(f"{data_dir}/{train_test}.bed", sep='\t',
                      names=['chrom', 'start', 'end', 'SVTYPE', 'score'])
 
     n_images = len(df)
@@ -75,8 +82,4 @@ if __name__ == '__main__':
     model.fit(ds, 
               steps_per_epoch=np.ceil(n_images/BATCH_SIZE),
               epochs=10)
-
-
-
-
 
