@@ -2,6 +2,7 @@ import pathlib
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.model_selection import train_test_split
 
 
 def get_filenames(data_dir='./data/cropped'):
@@ -40,14 +41,6 @@ def get_dataset(data_dir='./data/cropped', batch_size=32):
     Create a tensorflow dataset that yields image/label pairs to a model
     """
 
-    # df = pd.read_csv(f"{data_dir}/mean_score.bed", sep='\t',
-    #                  names=['chrom', 'start', 'end', 'SVTYPE', 'score'])
-
-    # n_images = len(df)
-
-    # df['filename'] = df.apply(get_filenames, axis=1)
-    # df['label'] = df.apply(get_labels, axis=1)
-
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
     filenames = get_filenames(data_dir)
@@ -85,6 +78,5 @@ if __name__ == '__main__':
 
     filenames = get_filenames()
     print(get_labels(filenames)[:5])
-
 
 
