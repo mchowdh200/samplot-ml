@@ -1,9 +1,12 @@
 import os
-# import pathlib
-# import numpy as np
-# import pandas as pd
+import numpy as np
 import tensorflow as tf
+from sklearn.metrics import classification_report, confusion_matrix
 
+
+# -----------------------------------------------------------------------------
+# Data utils
+# -----------------------------------------------------------------------------
 
 # shape that we want to resize images to.  Original images are 2090 x 575
 IMAGE_SHAPE = [262, 72, 3]
@@ -49,19 +52,23 @@ def parse(x):
     return result
 
 
-def get_dataset(data_dir='./data', batch_size=32, training='train'):
+def get_dataset(data_dir='./data', batch_size=32,
+                training='train', shuffle=True,
+                return_labels=False):
     """
-    Create a tensorflow dataset that yields image/label pairs to a model
+    Create a tensorflow dataset that yields image/label pairs to a model.
+    If return_labels is True, then we also return a dataset consisting of just labels
+    (note: these will not be shuffled, so the labels will only be valid if shuffle is False)
     """
-    print('-'*80)
-    print(f'getting {training} dataset...')
-    print('-'*80)
+    print(f'GETTING {training.upper()} DATASET')
 
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
     filenames = get_filenames(data_dir, training)
     labels = get_labels(filenames)
     n_images = len(filenames)
+
+    assert len(filenames) == len(labels)
 
     # basic datasets from filenames and their labels
     image_ds = tf.data.Dataset.from_tensor_slices(filenames)
@@ -81,32 +88,74 @@ def get_dataset(data_dir='./data', batch_size=32, training='train'):
 
     # combine with labels
     ds = tf.data.Dataset.zip((tfrds, label_ds))
-    ds = ds.shuffle(buffer_size=n_images).repeat()
+    if shuffle:
+        ds = ds.shuffle(buffer_size=n_images//4)
+    ds = ds.repeat()
     ds = ds.batch(batch_size).prefetch(buffer_size=AUTOTUNE)
 
+    if return_labels:
+        if shuffle:
+            raise ValueError('Cannot have shuffle==True when returning labels')
+        return ds, label_ds, n_images
+
     return ds, n_images
+
+
+# -----------------------------------------------------------------------------
+# Model utils
+# -----------------------------------------------------------------------------
+def display_prediction(path, model):
+    """
+    Given path of an image and a trained model, plot the image along with its
+    predicted class.
+    """
+    tfmodel = tf.keras.models.load_model(model)
     
+    # load image and make a prediction from the saved model.
+    img = load_image(path)
+    img = tf.expand_dims(img, axis=0)
+    pred = tfmodel(img).numpy()
 
-if __name__ == '__main__':
-    # # test out the dataset code with a barebones keras model
-    # BATCH_SIZE = 32
-    # ds, n_images = get_dataset(batch_size=BATCH_SIZE)
-    # # it = iter(ds)
-    # # print(next(it)[0].shape)
+    # TODO plot the original image and display prediction distribution
+    return list(pred[0])
 
-    # model = tf.keras.Sequential([
-    #     tf.keras.layers.Flatten(),
-    #     tf.keras.layers.Dense(32, activation='relu'),
-    #     tf.keras.layers.Dense(2, activation='sigmoid'),
-    # ])
 
-    # model.compile(loss='categorical_crossentropy', optimizer='Adam', metrics=['Accuracy'])
-    # model.fit(ds, 
-    #           steps_per_epoch=np.ceil(n_images/BATCH_SIZE),
-    #           epochs=10)
+def evaluate_model(model, batch_size=80):
+    """
+    Take a dataset with (image, label) pairs along with a trained model and
+    evaluate per class metrics.
+    """
+    tfmodel = tf.keras.models.load_model(model)
 
-    filenames = get_filenames()
-    print(filenames[:5])
-    print(get_labels(filenames)[:5])
+    test_ds, label_ds, n = get_dataset(batch_size=batch_size, training='test', 
+                                       shuffle=False, return_labels=True)
+
+    assert n % batch_size == 0, \
+        f'Batch size of {80} does not evenly divide into size of data ({n}).'
+
+    y_true = np.array([x.numpy() for x in label_ds.take(n)])
+    y_pred = np.argmax(tfmodel.predict(test_ds, steps=np.ceil(n/batch_size)), axis=1)
+    print(confusion_matrix(y_true, y_pred))
+    print(classification_report(y_true, y_pred))
+
+
+
+
+# if __name__ == '__main__':
+
+    # just picked one of each type of image
+    # test_ref = './data/cropped/10_100043404_100047636_NA07000_ref.png'
+    # test_het = './data/cropped/10_100375789_100378989_NA18505_het.png'
+    # test_alt = './data/cropped/10_100688639_100702031_HG00638_alt.png'
+
+    # model = tf.keras.models.load_model('./saved_models/my_model.h5')
+    
+    # filenames = get_filenames(training='test')
+    # with open('file_predictions.txt', 'w') as f:
+    #     f.write('Filename\tPrediction Distribution\n')
+    #     for fname in filenames:
+    #         f.write(f'{fname}\t{display_prediction(fname, model)}\n')
+            
+    # evaluate_model(model)
 
 
