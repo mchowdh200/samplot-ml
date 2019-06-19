@@ -137,6 +137,7 @@ def evaluate_model(model, batch_size=80):
     y_pred = np.argmax(tfmodel.predict(test_ds, steps=np.ceil(n/batch_size)), axis=1)
     print(confusion_matrix(y_true, y_pred))
     print(classification_report(y_true, y_pred))
+    print(tfmodel.summary())
 
 
 
