@@ -109,12 +109,12 @@ def display_prediction(path, model):
     Given path of an image and a trained model, plot the image along with its
     predicted class.
     """
-    tfmodel = tf.keras.models.load_model(model)
+    # tfmodel = tf.keras.models.load_model(model)
     
     # load image and make a prediction from the saved model.
     img = load_image(path)
     img = tf.expand_dims(img, axis=0)
-    pred = tfmodel(img).numpy()
+    pred = model(img).numpy()
 
     # TODO plot the original image and display prediction distribution
     return list(pred[0])
@@ -125,7 +125,7 @@ def evaluate_model(model, batch_size=80):
     Take a dataset with (image, label) pairs along with a trained model and
     evaluate per class metrics.
     """
-    tfmodel = tf.keras.models.load_model(model)
+    # tfmodel = tf.keras.models.load_model(model)
 
     test_ds, label_ds, n = get_dataset(batch_size=batch_size, training='test', 
                                        shuffle=False, return_labels=True)
@@ -134,10 +134,10 @@ def evaluate_model(model, batch_size=80):
         f'Batch size of {80} does not evenly divide into size of data ({n}).'
 
     y_true = np.array([x.numpy() for x in label_ds.take(n)])
-    y_pred = np.argmax(tfmodel.predict(test_ds, steps=np.ceil(n/batch_size)), axis=1)
+    y_pred = np.argmax(model.predict(test_ds, steps=np.ceil(n/batch_size)), axis=1)
     print(confusion_matrix(y_true, y_pred))
     print(classification_report(y_true, y_pred))
-    print(tfmodel.summary())
+    print(model.summary())
 
 
 

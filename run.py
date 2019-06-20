@@ -16,7 +16,7 @@ model_index = {
 }
 
 
-def get_model(model_type, model_params=None, compile_params=None):
+def get_compiled_model(model_type, model_params=None, compile_params=None):
     """
     Returns a compiled model with given model/compile parameters
     """
@@ -38,10 +38,23 @@ def get_model(model_type, model_params=None, compile_params=None):
 # Subcommand functions
 # -----------------------------------------------------------------------------
 def predict(args):
-    print(utils.display_prediction(args.image, args.model))
+    if args.use_h5:
+        model = tf.keras.models.load_model(args.model_path)
+    else:
+        model = model_index[args.model_type]()
+        model.load_weights(filepath=args.model_path).expect_partial()
+
+    if args.image.endswith('.txt'): # list of images
+        with open(args.image, 'r') as file:
+            for image in file:
+                print(utils.display_prediction(image, model))
+    else:
+        print(utils.display_prediction(args.image, model))
 
 def evaluate(args):
-    utils.evaluate_model(args.model, args.batch_size)
+    model = model_index[args.model_type]()
+    model.load_weights(filepath=args.model_path).expect_partial()
+    utils.evaluate_model(model, args.batch_size)
 
 def train(args):
 
@@ -60,9 +73,9 @@ def train(args):
     model_params = None
     compile_params = dict(
         loss='sparse_categorical_crossentropy',
-        optimizer=tf.optimizers.Adam(lr=5e-4, amsgrad=True),
+        optimizer=tf.optimizers.Adam(lr=args.lr, amsgrad=True),
         metrics=['SparseCategoricalAccuracy'])
-    model = get_model(model_index[args.model_type], model_params, compile_params)
+    model = get_compiled_model(model_index[args.model_type], model_params, compile_params)
     model.fit(training_set,
               steps_per_epoch=np.ceil(n_train/args.batch_size),
               validation_data=test_set,
@@ -88,8 +101,13 @@ predict_parser = subparsers.add_parser(
     'predict', help='Use a trained model to classify an image.',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 predict_parser.add_argument(
-    '--model', '-m', dest='model', type=str, required=True,
+    '--model-path', '-mp', dest='model_path', type=str, required=True,
     help='Path of trained model')
+predict_parser.add_argument(
+    '--model-type', '-mt', dest='model_type', type=str, required=True,
+    choices=model_index.keys(), default='CNN', help='Type of model to load.')
+predict_parser.add_argument(
+    '--use-h5', '-h5', dest='use_h5', action='store_true')
 predict_parser.add_argument(
     '--image', '-i', dest='image', type=str, required=True,
     help='Path of image')
@@ -101,8 +119,11 @@ eval_parser = subparsers.add_parser(
     'evaluate', help='Evaluate a trained model on a labelled dataset',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 eval_parser.add_argument(
-    '--model', '-m', dest='model', type=str, required=True,
-    help='Path of trained model')
+    '--model-path', '-mp', dest='model_path', type=str, required=True,
+    help="Path of trained model (before the dot '.')")
+eval_parser.add_argument(
+    '--model-type', '-mt', dest='model_type', type=str, required=True,
+    choices=model_index.keys(), default='CNN', help='Type of model to load.')
 eval_parser.add_argument(
     '--batch-size', '-b', dest='batch_size', type=int, required=False,
     default=80, help='Number of images to feed to model at a time.')
@@ -122,6 +143,10 @@ train_parser.add_argument(
 train_parser.add_argument(
     '--model-type', '-m', dest='model_type', type=str, required=False,
     default='CNN', help='Type of model to train.'
+)
+train_parser.add_argument(
+    '--learning-rate', '-lr', dest='lr', type=float, required=False,
+    default=1e-4, help='Learning rate for optimizer.'
 )
 train_parser.add_argument(
     '--save-to', '-s', dest='save_to', type=str, required=False,
