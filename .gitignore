@@ -2,4 +2,5 @@
 *.swp
 __pycache__
 data/
+out/
 old_data/
