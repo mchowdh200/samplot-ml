@@ -11,10 +11,8 @@
 #SBATCH --error=/Users/much8161/Repositories/samplot-ml/out/crop.err
 
 
-# TODO SBATCH stuff
 # script to take samplot image and crop out the
 # axes, title, etc.
-
 function crop
 {
     # relative path of input image
