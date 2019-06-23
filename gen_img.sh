@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eu
 
 # TODO don't forget to 'source activate samplot'
 
@@ -20,8 +21,8 @@ FASTA=/scratch/Shares/layer/ref/GRCh38_full_analysis_set_plus_decoy_hla/GRCh38_f
 
 # bam file names
 # b=$( grep $n sample_bam_paths.txt )
-BAM_LIST=data/cram-indices/cram-index-paths.txt # yeah I know they're crams...
-BAMS=$(grep $n $BAM_LIST)
+BAM_LIST=~/Repositories/samplot-ml/data/cram-indices/cram-index-paths.txt # yeah I know they're crams...
+BAMS=$(grep $SAMPLE $BAM_LIST)
 
 # output file
 OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
@@ -29,13 +30,10 @@ echo $OUT
 
 # TODO do I need to add reference (-r) for the crams
 
-source activate samplot
-~/Repositories/samplot/src/samplot.py -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT
-source deactivate
+~/Repositories/samplot/src/samplot.py -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA
 
 cd $START_DIR
 
 
-# cat data/del.sample.bed | gargs -p 1 "get_img {0} {1} {2} {3} {4}"
-
+#cat data/del.sample.bed | head | gargs 'rj -l log/ -n {0}_{1}_{2}_{3}_{4} -c "bash gen_img.sh {0} {1} {2} {3} {4}"'
 

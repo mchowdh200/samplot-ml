@@ -34,7 +34,8 @@ function crop
 export -f crop
 
 SCRIPT_DIR=$PWD
-DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/giab/
+# DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/giab
+DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/1kg/high_cov
 
 cd $DATA_DIR
 
