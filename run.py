@@ -47,13 +47,17 @@ def predict(args):
     if args.image.endswith('.txt'): # list of images
         with open(args.image, 'r') as file:
             for image in file:
-                print(utils.display_prediction(image, model))
+                # print(image)
+                print(utils.display_prediction(image.rstrip(), model))
     else:
         print(utils.display_prediction(args.image, model))
 
 def evaluate(args):
-    model = model_index[args.model_type]()
-    model.load_weights(filepath=args.model_path).expect_partial()
+    if args.use_h5:
+        model = tf.keras.models.load_model(args.model_path)
+    else:
+        model = model_index[args.model_type]()
+        model.load_weights(filepath=args.model_path).expect_partial()
     utils.evaluate_model(model, args.batch_size)
 
 def train(args):
@@ -124,6 +128,8 @@ eval_parser.add_argument(
 eval_parser.add_argument(
     '--model-type', '-mt', dest='model_type', type=str, required=True,
     choices=model_index.keys(), default='CNN', help='Type of model to load.')
+eval_parser.add_argument(
+    '--use-h5', '-h5', dest='use_h5', action='store_true')
 eval_parser.add_argument(
     '--batch-size', '-b', dest='batch_size', type=int, required=False,
     default=80, help='Number of images to feed to model at a time.')
