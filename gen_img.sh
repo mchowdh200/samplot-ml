@@ -20,7 +20,6 @@ cd $CRAI
 FASTA=/scratch/Shares/layer/ref/GRCh38_full_analysis_set_plus_decoy_hla/GRCh38_full_analysis_set_plus_decoy_hla.fa
 
 # bam file names
-# b=$( grep $n sample_bam_paths.txt )
 BAM_LIST=~/Repositories/samplot-ml/data/cram-indices/cram-index-paths.txt # yeah I know they're crams...
 BAMS=$(grep $SAMPLE $BAM_LIST)
 
@@ -28,10 +27,9 @@ BAMS=$(grep $SAMPLE $BAM_LIST)
 OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
 echo $OUT
 
-# TODO do I need to add reference (-r) for the crams
-
-~/Repositories/samplot/src/samplot.py -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA
-
+if [ ! -f $OUT ]; then
+    ~/Repositories/samplot/src/samplot.py -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA
+fi
 cd $START_DIR
 
 
