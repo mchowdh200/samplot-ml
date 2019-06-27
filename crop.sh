@@ -4,8 +4,8 @@
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=much8161@colorado.edu
 #SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --mem=4gb
+#SBATCH --ntasks=64
+#SBATCH --mem=64gb
 #SBATCH --time=24:00:00               # Time limit hrs:min:sec
 #SBATCH --output=/Users/much8161/Repositories/samplot-ml/out/crop.out
 #SBATCH --error=/Users/much8161/Repositories/samplot-ml/out/crop.err
@@ -43,6 +43,6 @@ DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/1kg/high_cov
 
 cd $DATA_DIR
 
-ls $DATA_DIR/imgs | gargs --log ~/Repositories/samplot-ml/log/log.txt 'rj -l /dev/null -n {0} -c "crop {0}"'
+ls $DATA_DIR/imgs | gargs -p 64 "crop {0}"
 
 cd $SCRIPT_DIR
