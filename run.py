@@ -58,34 +58,49 @@ def evaluate(args):
     else:
         model = model_index[args.model_type]()
         model.load_weights(filepath=args.model_path).expect_partial()
-    utils.evaluate_model(model, args.batch_size)
+    utils.evaluate_model(model, data_dir= args.data_dir, 
+                         batch_size=args.batch_size)
 
 def train(args):
+    print(args)
 
     # load data
     training_set, n_train = utils.get_dataset(
-        batch_size=args.batch_size, training='train')
-    test_set, n_test = utils.get_dataset(
-        batch_size=args.batch_size, training='test')
+        batch_size=args.batch_size,
+        data_dir=args.data_dir,
+        training='train',
+        augmentation=False,
+    )
+    val_set, n_val = utils.get_dataset(
+        batch_size=args.batch_size,
+        data_dir=args.data_dir,
+        training='val',
+        shuffle=False,
+        augmentation=False,
+    )
+
+    print(f"Train on {n_train} examples.  Validate on {n_val} examples.")
 
     # setup training
-    callbacks = [tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
-                 tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=5,
+    callbacks = [tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=10),
+                 tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=20,
                                                   restore_best_weights=True, verbose=1)]
 
     # TODO eventually I'd like to optionally be able to load these from a JSON
     model_params = None
     compile_params = dict(
-        loss='sparse_categorical_crossentropy',
+        loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=args.label_smoothing),
         optimizer=tf.optimizers.Adam(lr=args.lr, amsgrad=True),
-        metrics=['SparseCategoricalAccuracy'])
+        metrics=['CategoricalAccuracy'])
     model = get_compiled_model(model_index[args.model_type], model_params, compile_params)
-    model.fit(training_set,
-              steps_per_epoch=np.ceil(n_train/args.batch_size),
-              validation_data=test_set,
-              validation_steps=np.ceil(n_test/args.batch_size),
-              epochs=args.epochs,
-              callbacks=callbacks)
+    model.fit(
+        training_set,
+        steps_per_epoch=np.ceil(n_train/args.batch_size),
+        validation_data=val_set,
+        validation_steps=np.ceil(n_val/args.batch_size),
+        epochs=args.epochs,
+        callbacks=callbacks
+    )
 
     print(model.summary())
 
@@ -126,10 +141,14 @@ eval_parser.add_argument(
     '--model-path', '-mp', dest='model_path', type=str, required=True,
     help="Path of trained model (before the dot '.')")
 eval_parser.add_argument(
-    '--model-type', '-mt', dest='model_type', type=str, required=True,
+    '--model-type', '-mt', dest='model_type', type=str, required=False,
     choices=model_index.keys(), default='CNN', help='Type of model to load.')
 eval_parser.add_argument(
     '--use-h5', '-h5', dest='use_h5', action='store_true')
+eval_parser.add_argument(
+    '--data-dir', '-d', dest='data_dir', type=str, required=True,
+    help='Root data directory for test set.'
+)
 eval_parser.add_argument(
     '--batch-size', '-b', dest='batch_size', type=int, required=False,
     default=80, help='Number of images to feed to model at a time.')
@@ -147,12 +166,20 @@ train_parser.add_argument(
     '--epochs', '-e', dest='epochs', type=int, required=False,
     default=100, help='Max number of epochs to train model.')
 train_parser.add_argument(
-    '--model-type', '-m', dest='model_type', type=str, required=False,
+    '--model-type', '-mt', dest='model_type', type=str, required=False,
     default='CNN', help='Type of model to train.'
+)
+train_parser.add_argument(
+    '--data-dir', '-d', dest='data_dir', type=str, required=True,
+    help='Root directory of the training data.'
 )
 train_parser.add_argument(
     '--learning-rate', '-lr', dest='lr', type=float, required=False,
     default=1e-4, help='Learning rate for optimizer.'
+)
+train_parser.add_argument(
+    '--label-smoothing', '-ls', dest='label_smoothing', type=float, required=False,
+    default=0.0, help='Strength of label smoothing (0-1).'
 )
 train_parser.add_argument(
     '--save-to', '-s', dest='save_to', type=str, required=False,

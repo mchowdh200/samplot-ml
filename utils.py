@@ -11,12 +11,12 @@ from sklearn.metrics import classification_report, confusion_matrix
 # shape that we want to resize images to.  Original images are 2090 x 575
 IMAGE_SHAPE = [262, 72, 3]
 
-def get_filenames(data_dir='./data', training='train'):
+def get_filenames(data_dir, training='train'):
     """
     Get filenames of images from provided root directory.
     """
     with open(f'{data_dir}/{training}.txt', 'r') as file:
-        return [f'{data_dir}/cropped/{fname.rstrip()}' for fname in file]
+        return [f'{data_dir}/crop/{fname.rstrip()}' for fname in file]
 
 
 def get_labels(filenames):
@@ -24,11 +24,15 @@ def get_labels(filenames):
     Filnames are in the following format:
         <chrm>_<start>_<end>_<sample>_<genotype>.png
     We will use the genotypes as the labels.
+    Additionally, we apply label smoothing to the categorical labels
+    controlled by the parameter eps.
     """
-    labels = [f.split('_')[4].split('.')[0] for f in filenames]
+    labels = [f.split('_')[5].split('.')[0] for f in filenames]
     label_to_index = {'ref': 0, 'het': 1, 'alt': 2}
 
-    return [label_to_index[l] for l in labels]
+
+    return [tf.keras.utils.to_categorical(label_to_index[l], num_classes=3) 
+            for l in labels]
 
 
 def load_image(path):
@@ -52,8 +56,9 @@ def parse(x):
     return result
 
 
-def get_dataset(data_dir='./data', batch_size=32,
+def get_dataset(data_dir, batch_size=32,
                 training='train', shuffle=True,
+                augmentation=False,
                 return_labels=False):
     """
     Create a tensorflow dataset that yields image/label pairs to a model.
@@ -72,26 +77,42 @@ def get_dataset(data_dir='./data', batch_size=32,
 
     # basic datasets from filenames and their labels
     image_ds = tf.data.Dataset.from_tensor_slices(filenames)
-    image_ds = image_ds.map(load_image)
-    image_ds = image_ds.map(tf.io.serialize_tensor)
+    image_ds = image_ds.map(load_image, num_parallel_calls=AUTOTUNE)
+    image_ds = image_ds.map(tf.image.per_image_standardization, 
+                            num_parallel_calls=AUTOTUNE)
+
     label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(labels, tf.int64))
+
+    if augmentation:
+        image_ds = image_ds.concatenate(
+            image_ds.map(tf.image.flip_left_right,
+                         num_parallel_calls=AUTOTUNE))
+        label_ds = label_ds.concatenate(label_ds)
+        n_images *= 2
+    image_ds = image_ds.map(tf.io.serialize_tensor)
+
 
     # create the tfrecord file from the image dataset.  This takes a while
     # so I only want to do this if the file is not already present.
     if not os.path.isfile(f"{data_dir}/{training}.tfrec"):
+        print("generating TFRecord...")
         tfrec = tf.data.experimental.TFRecordWriter(f"{data_dir}/{training}.tfrec")
         tfrec.write(image_ds)
 
     # now load the dataset/parse the serialized tensors
-    tfrds = tf.data.TFRecordDataset(f"{data_dir}/{training}.tfrec")
+    tfrds = tf.data.TFRecordDataset(
+        f"{data_dir}/{training}.tfrec",
+        # num_parallel_reads=os.cpu_count(),
+    )
     tfrds = tfrds.map(parse, num_parallel_calls=AUTOTUNE)
 
     # combine with labels
     ds = tf.data.Dataset.zip((tfrds, label_ds))
     if shuffle:
-        ds = ds.shuffle(buffer_size=n_images//4)
+        ds = ds.shuffle(buffer_size=10000)
     ds = ds.repeat()
-    ds = ds.batch(batch_size).prefetch(buffer_size=AUTOTUNE)
+    ds = ds.batch(batch_size, drop_remainder=True)
+    ds = ds.prefetch(buffer_size=n_images//batch_size)
 
     if return_labels:
         if shuffle:
@@ -106,57 +127,38 @@ def get_dataset(data_dir='./data', batch_size=32,
 # -----------------------------------------------------------------------------
 def display_prediction(path, model):
     """
-    Given path of an image and a trained model, plot the image along with its
-    predicted class.
+    Given path of an image and a trained model, returns prediction
+    probability distribution over classes class.
     """
     # tfmodel = tf.keras.models.load_model(model)
     
     # load image and make a prediction from the saved model.
     img = load_image(path)
+    img = tf.image.per_image_standardization(img)
     img = tf.expand_dims(img, axis=0)
     pred = model(img).numpy()
 
-    # TODO plot the original image and display prediction distribution
     return list(pred[0])
 
 
-def evaluate_model(model, batch_size=80):
+def evaluate_model(model, data_dir, batch_size=80):
     """
     Take a dataset with (image, label) pairs along with a trained model and
     evaluate per class metrics.
     """
     # tfmodel = tf.keras.models.load_model(model)
 
-    test_ds, label_ds, n = get_dataset(batch_size=batch_size, training='test', 
-                                       shuffle=False, return_labels=True)
+    test_ds, label_ds, n = get_dataset(batch_size=batch_size, data_dir=data_dir,
+                                       training='val', shuffle=False, 
+                                       return_labels=True)
 
     assert n % batch_size == 0, \
-        f'Batch size of {80} does not evenly divide into size of data ({n}).'
+        f'Batch size of {batch_size} does not evenly divide into size of data ({n}).'
 
-    y_true = np.array([x.numpy() for x in label_ds.take(n)])
+    y_true = np.argmax(np.array([x.numpy() for x in label_ds.take(n)]), axis=1)
     y_pred = np.argmax(model.predict(test_ds, steps=np.ceil(n/batch_size)), axis=1)
     print(confusion_matrix(y_true, y_pred))
     print(classification_report(y_true, y_pred))
     print(model.summary())
-
-
-
-
-# if __name__ == '__main__':
-
-    # just picked one of each type of image
-    # test_ref = './data/cropped/10_100043404_100047636_NA07000_ref.png'
-    # test_het = './data/cropped/10_100375789_100378989_NA18505_het.png'
-    # test_alt = './data/cropped/10_100688639_100702031_HG00638_alt.png'
-
-    # model = tf.keras.models.load_model('./saved_models/my_model.h5')
-    
-    # filenames = get_filenames(training='test')
-    # with open('file_predictions.txt', 'w') as f:
-    #     f.write('Filename\tPrediction Distribution\n')
-    #     for fname in filenames:
-    #         f.write(f'{fname}\t{display_prediction(fname, model)}\n')
-            
-    # evaluate_model(model)
 
 
