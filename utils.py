@@ -111,7 +111,7 @@ def get_dataset(data_dir, batch_size=32,
     if shuffle:
         ds = ds.shuffle(buffer_size=10000)
     ds = ds.repeat()
-    ds = ds.batch(batch_size, drop_remainder=True)
+    ds = ds.batch(batch_size, drop_remainder=False)
     ds = ds.prefetch(buffer_size=n_images//batch_size)
 
     if return_labels:
@@ -152,6 +152,12 @@ def evaluate_model(model, data_dir, batch_size=80):
                                        training='val', shuffle=False, 
                                        return_labels=True)
 
+    if n % 2:
+        test_ds = test_ds.take(n-1)
+        label_ds = label_ds.take(n-1)
+        n-=1
+
+
     assert n % batch_size == 0, \
         f'Batch size of {batch_size} does not evenly divide into size of data ({n}).'
 
@@ -159,6 +165,5 @@ def evaluate_model(model, data_dir, batch_size=80):
     y_pred = np.argmax(model.predict(test_ds, steps=np.ceil(n/batch_size)), axis=1)
     print(confusion_matrix(y_true, y_pred))
     print(classification_report(y_true, y_pred))
-    print(model.summary())
 
 

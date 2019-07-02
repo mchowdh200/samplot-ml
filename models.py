@@ -47,11 +47,11 @@ def CNN():
     for i in range(5):
         x = Conv2DBlock(filters=32*(i+1), kernel_size=(3, 3),
                         pool_size=(2, 2), batch_norm=True,
-                        padding='same', dropout_rate=0.0)(x)
+                        padding='same', dropout_rate=0.2)(x)
         # TODO try 1x1 convolutions
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
     for i in range(2):
-        x = tf.keras.layers.Dense(4096)(x)
+        x = tf.keras.layers.Dense(1024)(x)
         x = tf.keras.layers.LeakyReLU()(x)
         x = tf.keras.layers.Dropout(0.5)(x)
     out = tf.keras.layers.Dense(3, activation='softmax')(x)

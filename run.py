@@ -25,9 +25,6 @@ def get_compiled_model(model_type, model_params=None, compile_params=None):
     else:
         model = model_type()
 
-    # model.compile(loss='sparse_categorical_crossentropy', 
-    #               optimizer=tf.optimizers.Adam(lr=5e-4, amsgrad=True), 
-    #               metrics=['SparseCategoricalAccuracy'])
     model.compile(**compile_params)
 
     return model
@@ -82,15 +79,19 @@ def train(args):
     print(f"Train on {n_train} examples.  Validate on {n_val} examples.")
 
     # setup training
-    callbacks = [tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=10),
-                 tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=20,
-                                                  restore_best_weights=True, verbose=1)]
+    callbacks = [
+        tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=5,
+                                         restore_best_weights=True, verbose=1)]
 
+    # lr_schedule= tf.keras.experimental.CosineDecayRestarts(
+    #     initial_learning_rate=args.lr,
+    #     first_decay_steps=1000)
     # TODO eventually I'd like to optionally be able to load these from a JSON
     model_params = None
     compile_params = dict(
         loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=args.label_smoothing),
-        optimizer=tf.optimizers.Adam(lr=args.lr, amsgrad=True),
+        optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr, amsgrad=True),
         metrics=['CategoricalAccuracy'])
     model = get_compiled_model(model_index[args.model_type], model_params, compile_params)
     model.fit(
@@ -105,8 +106,9 @@ def train(args):
     print(model.summary())
 
     if args.save_to:
-        model.save_weights(f"./saved_models/{args.save_to}_{type(model).__name__}",
-                           save_format='tf')
+        model.save(f"./saved_models/{args.save_to}")
+        # model.save_weights(f"./saved_models/{args.save_to}_{type(model).__name__}",
+        #                    save_format='tf')
 
 
 # -----------------------------------------------------------------------------
