@@ -130,15 +130,13 @@ def display_prediction(path, model):
     Given path of an image and a trained model, returns prediction
     probability distribution over classes class.
     """
-    # tfmodel = tf.keras.models.load_model(model)
-    
     # load image and make a prediction from the saved model.
     img = load_image(path)
     img = tf.image.per_image_standardization(img)
     img = tf.expand_dims(img, axis=0)
     pred = model(img).numpy()
 
-    return list(pred[0])
+    return pred[0]
 
 
 def evaluate_model(model, data_dir, batch_size=80):

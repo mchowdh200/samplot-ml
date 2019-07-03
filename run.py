@@ -44,10 +44,13 @@ def predict(args):
     if args.image.endswith('.txt'): # list of images
         with open(args.image, 'r') as file:
             for image in file:
-                # print(image)
-                print(utils.display_prediction(image.rstrip(), model))
+                pred = utils.display_prediction(image.rstrip(), model)
+                print(os.path.splitext(os.path.basename(image))[0], 
+                      pred[0], pred[1], pred[2], sep='\t')
     else:
-        print(utils.display_prediction(args.image, model))
+        pred = utils.display_prediction(args.image, model)
+        print(os.path.splitext(os.path.basename(args.image))[0], 
+              pred[0], pred[1], pred[2], sep='\t')
 
 def evaluate(args):
     if args.use_h5:
