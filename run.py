@@ -128,7 +128,7 @@ predict_parser.add_argument(
     '--model-path', '-mp', dest='model_path', type=str, required=True,
     help='Path of trained model')
 predict_parser.add_argument(
-    '--model-type', '-mt', dest='model_type', type=str, required=True,
+    '--model-type', '-mt', dest='model_type', type=str, required=False,
     choices=model_index.keys(), default='CNN', help='Type of model to load.')
 predict_parser.add_argument(
     '--use-h5', '-h5', dest='use_h5', action='store_true')

@@ -1,0 +1,6 @@
+* Workflow for evaluating giab dataset
+** Generate predictions with _./run.py predict_
+** Convert to bed using _pred2bed.py_
+** Annotate vcf using _annotate.py_
+** Filter vcf using _filter_vcf.sh_
+** Run _truvari.sh_ using your vcf of choice
