@@ -9,7 +9,11 @@ from sklearn.metrics import classification_report, confusion_matrix
 # -----------------------------------------------------------------------------
 
 # shape that we want to resize images to.  Original images are 2090 x 575
-IMAGE_SHAPE = [262, 72, 3]
+ORIG_SHAPE = [2090, 575, 3]
+SCALE_FACTOR = 8
+IMAGE_SHAPE = [np.ceil(ORIG_SHAPE[0]/SCALE_FACTOR).astype(int), 
+               np.ceil(ORIG_SHAPE[1]/SCALE_FACTOR).astype(int), 
+               3]
 
 def get_filenames(data_dir, training='train'):
     """
@@ -43,7 +47,7 @@ def load_image(path):
     """
     image = tf.io.read_file(path)
     image = tf.image.decode_png(image, channels=3)
-    image = tf.image.resize(image, IMAGE_SHAPE[:2]) # original was 2090 x 575
+    image = tf.image.resize(image, IMAGE_SHAPE[:2])
     return image/255
 
 
@@ -106,13 +110,16 @@ def get_dataset(data_dir, batch_size=32,
     )
     tfrds = tfrds.map(parse, num_parallel_calls=AUTOTUNE)
 
+
+
     # combine with labels
     ds = tf.data.Dataset.zip((tfrds, label_ds))
     if shuffle:
         ds = ds.shuffle(buffer_size=10000)
     ds = ds.repeat()
-    ds = ds.batch(batch_size, drop_remainder=False)
-    ds = ds.prefetch(buffer_size=n_images//batch_size)
+    ds = ds.batch(batch_size, drop_remainder=True)
+    # ds = ds.prefetch(buffer_size=n_images//(4*batch_size))
+    ds = ds.prefetch(buffer_size=AUTOTUNE)
 
     if return_labels:
         if shuffle:

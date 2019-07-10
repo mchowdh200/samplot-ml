@@ -3,58 +3,100 @@ import tensorflow as tf
 
 class Conv2DBlock:
     """
-    Block containing a conv2d layer followed by dropout, batchnorm (optional), and pooling
+    Composition of 2D convolutions
     """
-    def __init__(self, filters=128, kernel_size=(6, 6),
-                 strides=(1, 1), dilation_rate=(1, 1),
-                 dropout_rate=0.0, pool_size=(2, 2),
-                 kernel_regularizer=None,
-                 data_format='channels_last',
-                 padding='valid',
-                 batch_norm=False):
-        self.filters = filters
-        self.kernel_size = kernel_size
-        self.strides = strides
-        self.dilation_rate = dilation_rate
-        self.dropout_rate = dropout_rate
-        self.pool_size = pool_size
+    def __init__(self, n_channels=32, n_layers=1, kernel_regularizer=None,
+                 kernel_size=(3, 3), dilation_rate=(1, 1),
+                 batch_norm=False, dropout_rate=0.0):
+        self.n_channels = n_channels
+        self.n_layers = n_layers
         self.kernel_regularizer = kernel_regularizer
-        self.data_format = data_format
-        self.padding = padding
+        self.kernel_size = kernel_size
+        self.dilation_rate = dilation_rate
         self.batch_norm = batch_norm
+        self.dropout_rate=dropout_rate
+
+        self.conv_layers = [
+            tf.keras.layers.Conv2D(
+                filters=self.n_channels, kernel_size=self.kernel_size,
+                dilation_rate=self.dilation_rate,
+                kernel_regularizer=self.kernel_regularizer, padding='same')
+            for i in range(self.n_layers)]
+
 
     def __call__(self, x):
-        x = tf.keras.layers.Conv2D(
-            filters=self.filters, kernel_size=self.kernel_size,
-            strides=self.strides, dilation_rate=self.dilation_rate,
-            data_format=self.data_format, padding=self.padding,
-            kernel_regularizer=self.kernel_regularizer,
-            kernel_initializer='glorot_uniform')(x)
-        x = tf.keras.layers.LeakyReLU()(x)
-        x = tf.keras.layers.Dropout(rate=self.dropout_rate)(x)
-        if self.batch_norm:
-            x = tf.keras.layers.BatchNormalization()(x)
-        return tf.keras.layers.MaxPool2D(pool_size=self.pool_size)(x)
+
+        for layer in self.conv_layers:
+            x = layer(x)
+            if self.batch_norm:
+                x = tf.keras.layers.BatchNormalization()(x)
+            if self.dropout_rate > 0:
+                x = tf.keras.layers.SpatialDropout2D(rate=self.dropout_rate)(x)
+
+            x = tf.keras.layers.LeakyReLU()(x)
+        return x
 
 
-def CNN():
+class ResidualBlock(Conv2DBlock):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def __call__(self, x):
+        temp = x
+        x = super().__call__(x)
+        return tf.keras.layers.LeakyReLU()(temp + x)
+
+
+
+def CNN(dropout_rate=0.0):
     """
     Construct and return an (uncompiled) conv2d model out of Conv2DBlocks.
     """
     inp = tf.keras.Input(shape=(None, None, 3))
     x = inp
+    x = tf.math.reduce_max(tf.image.sobel_edges(x), axis=4)
 
-    for i in range(5):
-        x = Conv2DBlock(filters=32*(i+1), kernel_size=(3, 3),
-                        pool_size=(2, 2), batch_norm=True,
-                        padding='same', dropout_rate=0.2)(x)
-        # TODO try 1x1 convolutions
+    x = tf.keras.layers.Conv2D(
+        filters=32, kernel_size=(7, 7), strides=(1, 1),
+        dilation_rate=(2, 2), padding='valid')(x)
+    x = tf.keras.layers.BatchNormalization()(x)
+    x = tf.keras.layers.LeakyReLU()(x)
+    x = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(x)
+
+    for i in range(4):
+        x = Conv2DBlock(
+            n_channels=32*(i+1), n_layers=1, kernel_size=(1, 1),
+            batch_norm=True, dropout_rate=dropout_rate)(x)
+        x = ResidualBlock(
+            n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+            batch_norm=True, dropout_rate=dropout_rate)(x)
+        x = ResidualBlock(
+            n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+            batch_norm=True, dropout_rate=dropout_rate)(x)
+        x = ResidualBlock(
+            n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+            batch_norm=True, dropout_rate=dropout_rate)(x)
+        x = tf.keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2))(x)
+
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    for i in range(2):
-        x = tf.keras.layers.Dense(1024)(x)
+    for i in range(1):
+        x = tf.keras.layers.Dense(1024//(i+1))(x)
         x = tf.keras.layers.LeakyReLU()(x)
-        x = tf.keras.layers.Dropout(0.5)(x)
+        # x = tf.keras.layers.Dropout(0.5)(x)
+
     out = tf.keras.layers.Dense(3, activation='softmax')(x)
     return tf.keras.Model(inputs=inp, outputs=out)
 
+
+def Baseline(input_shape):
+    """
+    Simple model that just takes the image and flattens it for a feedforward
+    neural network.
+    """
+    inp = tf.keras.Input(shape=input_shape)
+    x = tf.keras.layers.Flatten()(inp)
+    x = tf.keras.layers.Dense(1024, activation='relu')(x)
+    out = tf.keras.layers.Dense(3, activation='softmax')(x)
+    return tf.keras.Model(inputs=inp, outputs=out)
+    
 

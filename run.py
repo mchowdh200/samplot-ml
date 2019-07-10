@@ -2,6 +2,7 @@
 import os
 import sys
 import argparse
+import functools
 import numpy as np
 import tensorflow as tf
 import utils
@@ -9,9 +10,10 @@ import models
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
-# TODO refactor evaluate and predict to pick the model type
-
 model_index = {
+    'baseline': functools.partial(
+        models.Baseline, 
+        input_shape=utils.IMAGE_SHAPE),
     'CNN' : models.CNN
 }
 
@@ -71,8 +73,11 @@ def train(args):
         training='train',
         augmentation=False,
     )
+
+    val_batch_size = 512
     val_set, n_val = utils.get_dataset(
-        batch_size=args.batch_size,
+        # batch_size=args.batch_size,
+        batch_size=val_batch_size,
         data_dir=args.data_dir,
         training='val',
         shuffle=False,
@@ -83,8 +88,8 @@ def train(args):
 
     # setup training
     callbacks = [
-        tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
-        tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=5,
+        tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=5),
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=8,
                                          restore_best_weights=True, verbose=1)]
 
     # lr_schedule= tf.keras.experimental.CosineDecayRestarts(
@@ -93,15 +98,24 @@ def train(args):
     # TODO eventually I'd like to optionally be able to load these from a JSON
     model_params = None
     compile_params = dict(
-        loss=tf.keras.losses.CategoricalCrossentropy(label_smoothing=args.label_smoothing),
-        optimizer=tf.keras.optimizers.Adam(learning_rate=args.lr, amsgrad=True),
+        loss=tf.keras.losses.CategoricalCrossentropy(
+            label_smoothing=args.label_smoothing),
+        # optimizer=tf.keras.optimizers.Adam(
+        #     learning_rate=args.lr, amsgrad=True),
+        optimizer=tf.keras.optimizers.SGD(
+            learning_rate=args.lr, 
+            momentum=0.9, 
+            nesterov=True),
         metrics=['CategoricalAccuracy'])
-    model = get_compiled_model(model_index[args.model_type], model_params, compile_params)
+    model = get_compiled_model(
+        model_index[args.model_type], 
+        model_params, 
+        compile_params)
     model.fit(
         training_set,
         steps_per_epoch=np.ceil(n_train/args.batch_size),
         validation_data=val_set,
-        validation_steps=np.ceil(n_val/args.batch_size),
+        validation_steps=np.ceil(n_val/val_batch_size),
         epochs=args.epochs,
         callbacks=callbacks
     )
@@ -110,8 +124,6 @@ def train(args):
 
     if args.save_to:
         model.save(f"./saved_models/{args.save_to}")
-        # model.save_weights(f"./saved_models/{args.save_to}_{type(model).__name__}",
-        #                    save_format='tf')
 
 
 # -----------------------------------------------------------------------------
@@ -152,8 +164,7 @@ eval_parser.add_argument(
     '--use-h5', '-h5', dest='use_h5', action='store_true')
 eval_parser.add_argument(
     '--data-dir', '-d', dest='data_dir', type=str, required=True,
-    help='Root data directory for test set.'
-)
+    help='Root data directory for test set.')
 eval_parser.add_argument(
     '--batch-size', '-b', dest='batch_size', type=int, required=False,
     default=80, help='Number of images to feed to model at a time.')
@@ -172,20 +183,16 @@ train_parser.add_argument(
     default=100, help='Max number of epochs to train model.')
 train_parser.add_argument(
     '--model-type', '-mt', dest='model_type', type=str, required=False,
-    default='CNN', help='Type of model to train.'
-)
+    default='CNN', help='Type of model to train.')
 train_parser.add_argument(
     '--data-dir', '-d', dest='data_dir', type=str, required=True,
-    help='Root directory of the training data.'
-)
+    help='Root directory of the training data.')
 train_parser.add_argument(
     '--learning-rate', '-lr', dest='lr', type=float, required=False,
-    default=1e-4, help='Learning rate for optimizer.'
-)
+    default=1e-4, help='Learning rate for optimizer.')
 train_parser.add_argument(
     '--label-smoothing', '-ls', dest='label_smoothing', type=float, required=False,
-    default=0.0, help='Strength of label smoothing (0-1).'
-)
+    default=0.0, help='Strength of label smoothing (0-1).')
 train_parser.add_argument(
     '--save-to', '-s', dest='save_to', type=str, required=False,
     default=None, help='filename if you want to save your trained model.')
