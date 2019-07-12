@@ -74,10 +74,8 @@ def train(args):
         augmentation=False,
     )
 
-    val_batch_size = 512
     val_set, n_val = utils.get_dataset(
-        # batch_size=args.batch_size,
-        batch_size=val_batch_size,
+        batch_size=args.batch_size,
         data_dir=args.data_dir,
         training='val',
         shuffle=False,
@@ -104,7 +102,7 @@ def train(args):
         #     learning_rate=args.lr, amsgrad=True),
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=args.lr, 
-            momentum=0.9, 
+            momentum=args.momentum, 
             nesterov=True),
         metrics=['CategoricalAccuracy'])
     model = get_compiled_model(
@@ -115,7 +113,7 @@ def train(args):
         training_set,
         steps_per_epoch=np.ceil(n_train/args.batch_size),
         validation_data=val_set,
-        validation_steps=np.ceil(n_val/val_batch_size),
+        validation_steps=np.ceil(n_val/args.batch_size),
         epochs=args.epochs,
         callbacks=callbacks
     )
@@ -190,6 +188,9 @@ train_parser.add_argument(
 train_parser.add_argument(
     '--learning-rate', '-lr', dest='lr', type=float, required=False,
     default=1e-4, help='Learning rate for optimizer.')
+train_parser.add_argument(
+    '--momentum', '-mom', dest='momentum', type=float, required=False,
+    default=0.9, help='Momentum term in SGD optimizer.')
 train_parser.add_argument(
     '--label-smoothing', '-ls', dest='label_smoothing', type=float, required=False,
     default=0.0, help='Strength of label smoothing (0-1).')

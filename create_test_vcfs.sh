@@ -20,7 +20,8 @@ source deactivate
 
 source activate cyvcf2
 python3 annotate.py $VCF_FILE $BED_FILE | bgzip -c > $VCF_DIR/ml.vcf.gz
-bash filter_vcf.sh $VCF_DIR
+tabix $VCF_DIR/ml.vcf.gz
+# bash filter_vcf.sh $VCF_DIR
 source deactivate
 
 

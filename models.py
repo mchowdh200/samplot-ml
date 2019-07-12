@@ -44,7 +44,14 @@ class ResidualBlock(Conv2DBlock):
     def __call__(self, x):
         temp = x
         x = super().__call__(x)
-        return tf.keras.layers.LeakyReLU()(temp + x)
+        x = tf.keras.layers.LeakyReLU()(x)
+        # this seems to cause problems when
+        # trying to save the model             
+        # return tf.keras.layers.LeakyReLU()(temp + x) 
+        x = tf.keras.layers.Add()([temp, x])
+        return tf.keras.layers.LeakyReLU()(x)
+
+                                            
 
 
 
@@ -54,7 +61,7 @@ def CNN(dropout_rate=0.0):
     """
     inp = tf.keras.Input(shape=(None, None, 3))
     x = inp
-    x = tf.math.reduce_max(tf.image.sobel_edges(x), axis=4)
+    # x = tf.math.reduce_max(tf.image.sobel_edges(x), axis=4)
 
     x = tf.keras.layers.Conv2D(
         filters=32, kernel_size=(7, 7), strides=(1, 1),
@@ -63,7 +70,7 @@ def CNN(dropout_rate=0.0):
     x = tf.keras.layers.LeakyReLU()(x)
     x = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(x)
 
-    for i in range(4):
+    for i in range(3):
         x = Conv2DBlock(
             n_channels=32*(i+1), n_layers=1, kernel_size=(1, 1),
             batch_norm=True, dropout_rate=dropout_rate)(x)
@@ -82,7 +89,7 @@ def CNN(dropout_rate=0.0):
     for i in range(1):
         x = tf.keras.layers.Dense(1024//(i+1))(x)
         x = tf.keras.layers.LeakyReLU()(x)
-        # x = tf.keras.layers.Dropout(0.5)(x)
+        x = tf.keras.layers.Dropout(0.5)(x)
 
     out = tf.keras.layers.Dense(3, activation='softmax')(x)
     return tf.keras.Model(inputs=inp, outputs=out)
