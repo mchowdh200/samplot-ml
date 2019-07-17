@@ -1,15 +1,18 @@
 import os
+import cv2
 import numpy as np
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix
 
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # -----------------------------------------------------------------------------
 # Data utils
 # -----------------------------------------------------------------------------
 
 # shape that we want to resize images to.  Original images are 2090 x 575
-ORIG_SHAPE = [2090, 575, 3]
+ORIG_SHAPE = [575, 2090, 3]
 SCALE_FACTOR = 8
 IMAGE_SHAPE = [np.ceil(ORIG_SHAPE[0]/SCALE_FACTOR).astype(int), 
                np.ceil(ORIG_SHAPE[1]/SCALE_FACTOR).astype(int), 
@@ -145,6 +148,56 @@ def display_prediction(path, model):
 
     return pred[0]
 
+def grad_cam(path, model, label, final_conv, pre_softmax):
+    """
+    Grad cam visualization technique for convolutional neural networks.
+    https://arxiv.org/pdf/1610.02391.pdf
+    - path: image path.
+    - model: keras model.
+    - final_conv: name of the final convolutional layer.
+    - pre_softmax: name of the Dense layer before softmax
+
+    Variables named to match the procedure in the paper
+    - y: class prediction score (before softmax)
+    - A: Activations of final conv layer
+    - dy_dA: derivative of prediction (for a given class) w.r.t. the activations
+    - alpha: per channel weights for the activations (global average pooled from dy_dA)
+    - L: grad cam weights
+    """
+    model = tf.keras.models.load_model(model) # TODO just pass the model in
+    # print(model.summary())
+    img = load_image(path)
+
+    normed_img=tf.image.per_image_standardization(img)
+    normed_img=tf.expand_dims(normed_img, axis=0)
+
+    submodel = tf.keras.Model(inputs=model.inputs,
+                              outputs=[model.get_layer(pre_softmax).output,
+                                       model.get_layer(final_conv).output])
+
+    # get the gradient of the pre softmax score w.r.t. the final conv layer
+    # feature maps and create the grad-cam
+    with tf.GradientTape() as tape:
+        y, A = submodel(normed_img)
+        dy_dA = tape.gradient(y[:, label], A)
+    alpha = tf.keras.layers.GlobalAveragePooling2D()(dy_dA)
+    L = tf.keras.layers.ReLU()(tf.math.reduce_sum(alpha*A, axis=3)).numpy()
+
+    # scale the weights and remove the batch dimension
+    heatmap = L[0]/np.max(L)
+
+    # image dimensions are swapped in the resize function (why???)
+    heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
+    
+    # convert the heatmap and image to 0-255 range
+    img = np.uint8(img.numpy()*255)
+    heatmap = np.uint8(heatmap*255)
+    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+    img = cv2.addWeighted(img, 0.6, heatmap, 0.4, 0)
+
+    plt.matshow(img)
+    plt.show()
+
 
 def evaluate_model(model, data_dir, batch_size=80):
     """
@@ -170,5 +223,17 @@ def evaluate_model(model, data_dir, batch_size=80):
     y_pred = np.argmax(model.predict(test_ds, steps=np.ceil(n/batch_size)), axis=1)
     print(confusion_matrix(y_true, y_pred))
     print(classification_report(y_true, y_pred))
+
+
+
+if __name__ == '__main__':
+    grad_cam(
+        path='./data/high_cov/crop/chr11_13606661_13607862_NA19093_alt.png', 
+        model='./saved_models/CNN_7_16.h5', 
+        label=2,
+        final_conv='leaky_re_lu_39',
+        pre_softmax='dense_1')
+
+
 
 

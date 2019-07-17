@@ -121,7 +121,7 @@ def train(args):
     print(model.summary())
 
     if args.save_to:
-        model.save(f"./saved_models/{args.save_to}")
+        model.save(args.save_to)
 
 
 # -----------------------------------------------------------------------------

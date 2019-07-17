@@ -91,7 +91,8 @@ def CNN(dropout_rate=0.0):
         x = tf.keras.layers.LeakyReLU()(x)
         x = tf.keras.layers.Dropout(0.5)(x)
 
-    out = tf.keras.layers.Dense(3, activation='softmax')(x)
+    x = tf.keras.layers.Dense(3)(x)
+    out = tf.keras.layers.Softmax()(x)
     return tf.keras.Model(inputs=inp, outputs=out)
 
 
