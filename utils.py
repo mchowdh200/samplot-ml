@@ -2,6 +2,7 @@ import os
 import cv2
 import numpy as np
 import tensorflow as tf
+import matplotlib
 import matplotlib.pyplot as plt
 from sklearn.metrics import classification_report, confusion_matrix
 
@@ -148,7 +149,7 @@ def display_prediction(path, model):
 
     return pred[0]
 
-def grad_cam(path, model, label, final_conv, pre_softmax):
+def grad_cam(path, model, final_conv, pre_softmax, out_dir=None):
     """
     Grad cam visualization technique for convolutional neural networks.
     https://arxiv.org/pdf/1610.02391.pdf
@@ -164,39 +165,69 @@ def grad_cam(path, model, label, final_conv, pre_softmax):
     - alpha: per channel weights for the activations (global average pooled from dy_dA)
     - L: grad cam weights
     """
-    model = tf.keras.models.load_model(model) # TODO just pass the model in
-    # print(model.summary())
-    img = load_image(path)
+    img = tf.io.read_file(path) #load_image(path)
+    img = tf.image.decode_png(img, channels=3)
 
-    normed_img=tf.image.per_image_standardization(img)
+    normed_img = tf.image.resize(img, IMAGE_SHAPE[:2])/255
+    normed_img=tf.image.per_image_standardization(normed_img)
     normed_img=tf.expand_dims(normed_img, axis=0)
 
     submodel = tf.keras.Model(inputs=model.inputs,
                               outputs=[model.get_layer(pre_softmax).output,
-                                       model.get_layer(final_conv).output])
+                                       model.get_layer(final_conv).output,
+                                       model.layers[-1].output])
 
     # get the gradient of the pre softmax score w.r.t. the final conv layer
     # feature maps and create the grad-cam
-    with tf.GradientTape() as tape:
-        y, A = submodel(normed_img)
-        dy_dA = tape.gradient(y[:, label], A)
-    alpha = tf.keras.layers.GlobalAveragePooling2D()(dy_dA)
-    L = tf.keras.layers.ReLU()(tf.math.reduce_sum(alpha*A, axis=3)).numpy()
+    with tf.GradientTape(persistent=True) as tape:
+        y, A , pred = submodel(normed_img)
+        dy_dA = [tape.gradient(y[:, i], A) for i in range(3)]
 
-    # scale the weights and remove the batch dimension
-    heatmap = L[0]/np.max(L)
 
-    # image dimensions are swapped in the resize function (why???)
-    heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
-    
     # convert the heatmap and image to 0-255 range
-    img = np.uint8(img.numpy()*255)
-    heatmap = np.uint8(heatmap*255)
-    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-    img = cv2.addWeighted(img, 0.6, heatmap, 0.4, 0)
+    img = np.uint8(img)
+    plt.close()
+    plt.rcParams["figure.figsize"] = (10, 20)
+    gs = matplotlib.gridspec.GridSpec(4, 1)
+    plt.subplot(gs[0, 0])
+    plt.imshow(img)
+    plt.tick_params(top=False, bottom=False, 
+                    left=False, right=False, 
+                    labelleft=False, labelbottom=False)
+    plt.xlabel('Original image')
+    plt.title(f"[ref, het, alt] = {pred.numpy()[0]}")
 
-    plt.matshow(img)
-    plt.show()
+    label_dict = {0: 'Homozygous Reference',
+                  1: 'Heterozygous',
+                  2: 'Homozygous Alternate'}
+
+    for i, x in enumerate(dy_dA):
+        alpha = tf.keras.layers.GlobalAveragePooling2D()(x)
+        L = tf.keras.layers.ReLU()(tf.math.reduce_sum(alpha*A, axis=3)).numpy()
+
+        # scale the weights and remove the batch dimension
+        heatmap = L[0]/np.max(L)
+
+        # image dimensions are swapped in the resize function (why???)
+        heatmap = cv2.resize(heatmap, (img.shape[1], img.shape[0]))
+        
+        heatmap = np.uint8(heatmap*255)
+        heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+        cam = cv2.addWeighted(img, 0.6, heatmap, 0.4, 0)
+
+        plt.subplot(gs[i + 1, 0])
+        plt.imshow(cam)
+        plt.tick_params(top=False, bottom=False, 
+                        left=False, right=False, 
+                        labelleft=False, labelbottom=False)
+        plt.xlabel(label_dict[i])
+
+    plt.tight_layout()
+    if out_dir:
+        plt.savefig(
+            out_dir + '/' + os.path.basename(path).split('.')[0] + '.heatmap.png')
+    else:
+        plt.show()
 
 
 def evaluate_model(model, data_dir, batch_size=80):
@@ -227,10 +258,12 @@ def evaluate_model(model, data_dir, batch_size=80):
 
 
 if __name__ == '__main__':
+
+    model = tf.keras.models.load_model('./saved_models/CNN_7_16.h5')
     grad_cam(
-        path='./data/high_cov/crop/chr11_13606661_13607862_NA19093_alt.png', 
-        model='./saved_models/CNN_7_16.h5', 
-        label=2,
+        path='data/giab/crop/8_146042946_146043066_DEL.png',
+        model=model, 
+        # final_conv='leaky_re_lu_20',
         final_conv='leaky_re_lu_39',
         pre_softmax='dense_1')
 
