@@ -1,21 +1,34 @@
 #!/bin/bash
-# VCF_DIR=data/giab/VCF
-# BED_DIR=data/giab/BED
-# lumpy_vcf=$VCF_DIR/HG002-smoove.genotyped.vcf.gz
-# fasta=/scratch/Shares/layer/ref/hs37-1kg/human_g1k_v37.20.fasta
-# fasta=data/FASTA/human_g1k_v37.20.fasta
 
-out_dir=duphold_comp
-rm -rf $out_dir
+while (( "$#" )); do
+    case "$1" in
+        -c|--comp-vcf)
+            comp_vcf=$2
+            shift 2;;
+        -b|--base-vcf) # ie truth set
+            base_vcf=$2
+            shift 2;;
+        -r|--reference)
+            reference=$2
+            shift 2;;
+        -o|--out-dir)
+            out_dir=$2
+            shift 2;;
+    esac
+done
+[[ -z $comp_vcf ]] && echo Missing argument --comp-vcf && exit 1
+[[ -z $base_vcf ]] && echo Missing argument --base-vcf && exit 1
+[[ -z $reference ]] && echo Missing argument --reference && exit 1
+[[ -z $out_dir ]] && echo Missing argument --out-dir && exit 1
 
-comp_vcf=$1
-truth_set=$2
-fasta=$3
+# if the out dir already exists, truvari fails
+[[ -d $out_dir ]] && rm -rf $out_dir
 
 truvari \
-    -b $truth_set \
+    -b $base_vcf \
     -c $comp_vcf \
     -o $out_dir \
+    --reference $reference \
     --pctsim 0 \
     --sizemax 15000000 \
     --sizemin 300 --sizefilt 270 \
@@ -23,11 +36,3 @@ truvari \
     --refdist 20 \
     --noprog \
     --no-ref a
-    # --debug
-    #--giabreport \
-
-    #--reference $fasta \
-
-
-    # -b $VCF_DIR/HG002_SVs_Tier1_v0.6.DEL.vcf.gz \
-    # --includebed $BED_DIR/HG002_SVs_Tier1_v0.6.bed \
