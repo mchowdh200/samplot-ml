@@ -37,12 +37,28 @@ function crop
 
 export -f crop
 
+while (( "$#" )); do
+    case "$1" in
+        -p|--processes)
+            PROC=$2
+            shift 2;;
+        -d|--data-dir)
+            DATA_DIR=$2
+            shift 2;;
+        --) # end argument parsing
+            shift
+            break;;
+        -*|--*=) # unsupported flags
+            echo "Error: Unsupported flag $1" >&2
+            exit 1;;
+    esac
+done
+[[ -z $PROC ]] && echo Missing argument --processes && exit 1
+[[ -z $DATA_DIR ]] && echo Missing argument --data-dir && exit 1
+
 SCRIPT_DIR=$PWD
-# DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/giab
-DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/1kg/high_cov
+# DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/1kg/high_cov
 
 cd $DATA_DIR
-
-ls $DATA_DIR/imgs | gargs -p 64 "crop {0}"
-
+ls $DATA_DIR/imgs | gargs -p $PROC "crop {0}"
 cd $SCRIPT_DIR
