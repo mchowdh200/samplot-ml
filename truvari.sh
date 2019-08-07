@@ -35,4 +35,5 @@ truvari \
     --pctov 0.6 \
     --refdist 20 \
     --noprog \
-    --no-ref a
+    --no-ref a \
+    # --includebed ~/Repositories/samplot-ml/data/giab/BED/HG002_SVs_Tier1_v0.6.bed \

@@ -1,4 +1,5 @@
 import os
+import functools
 import cv2
 import numpy as np
 import tensorflow as tf
@@ -15,9 +16,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # shape that we want to resize images to.  Original images are 2090 x 575
 ORIG_SHAPE = [575, 2090, 3]
 SCALE_FACTOR = 8
-IMAGE_SHAPE = [np.ceil(ORIG_SHAPE[0]/SCALE_FACTOR).astype(int), 
-               np.ceil(ORIG_SHAPE[1]/SCALE_FACTOR).astype(int), 
-               3]
+IMAGE_SHAPE = np.array([np.ceil(ORIG_SHAPE[0]/SCALE_FACTOR).astype(int), 
+                        np.ceil(ORIG_SHAPE[1]/SCALE_FACTOR).astype(int), 
+                        3])
 
 def get_filenames(data_dir, training='train'):
     """
@@ -91,12 +92,12 @@ def get_dataset(data_dir, batch_size=32,
 
     label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(labels, tf.int64))
 
-    if augmentation:
-        image_ds = image_ds.concatenate(
-            image_ds.map(tf.image.flip_left_right,
-                         num_parallel_calls=AUTOTUNE))
-        label_ds = label_ds.concatenate(label_ds)
-        n_images *= 2
+    # if augmentation:
+    #     image_ds = image_ds.concatenate(
+    #         image_ds.map(tf.image.flip_left_right,
+    #                      num_parallel_calls=AUTOTUNE))
+    #     label_ds = label_ds.concatenate(label_ds)
+    #     n_images *= 2
     image_ds = image_ds.map(tf.io.serialize_tensor)
 
 
@@ -113,13 +114,19 @@ def get_dataset(data_dir, batch_size=32,
         # num_parallel_reads=os.cpu_count(),
     )
     tfrds = tfrds.map(parse, num_parallel_calls=AUTOTUNE)
-
-
+    
+    if augmentation:
+        tfrds = tfrds.map(tf.image.random_flip_left_right)
+        tfrds = tfrds.map(
+            functools.partial(
+                tf.image.random_crop, size=IMAGE_SHAPE-np.array([5, 31, 0])
+            )
+        )
 
     # combine with labels
     ds = tf.data.Dataset.zip((tfrds, label_ds))
     if shuffle:
-        ds = ds.shuffle(buffer_size=10000)
+        ds = ds.shuffle(buffer_size=50000)
     ds = ds.repeat()
     ds = ds.batch(batch_size, drop_remainder=True)
     # ds = ds.prefetch(buffer_size=n_images//(4*batch_size))

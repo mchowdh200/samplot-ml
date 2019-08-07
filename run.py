@@ -14,7 +14,8 @@ model_index = {
     'baseline': functools.partial(
         models.Baseline, 
         input_shape=utils.IMAGE_SHAPE),
-    'CNN' : models.CNN
+    'CNN' : models.CNN,
+    'resnext': models.ResNeXt
 }
 
 
@@ -71,7 +72,8 @@ def train(args):
         batch_size=args.batch_size,
         data_dir=args.data_dir,
         training='train',
-        augmentation=False,
+        # augmentation=False,
+        augmentation=True,
     )
 
     val_set, n_val = utils.get_dataset(
@@ -86,23 +88,26 @@ def train(args):
 
     # setup training
     callbacks = [
-        tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=5),
+        # tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
         tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=8,
                                          restore_best_weights=True, verbose=1)]
 
-    # lr_schedule= tf.keras.experimental.CosineDecayRestarts(
-    #     initial_learning_rate=args.lr,
-    #     first_decay_steps=1000)
+    lr_schedule = tf.keras.experimental.CosineDecayRestarts(
+        initial_learning_rate=args.lr,
+        alpha=0.0001,
+        t_mul=2.0,
+        m_mul=1.25,
+        # first_decay_steps=np.ceil(n_train/(args.batch_size*2)))
+        first_decay_steps=np.ceil(n_train/(args.batch_size*8)))
+
     # TODO eventually I'd like to optionally be able to load these from a JSON
     model_params = None
     compile_params = dict(
         loss=tf.keras.losses.CategoricalCrossentropy(
             label_smoothing=args.label_smoothing),
-        # optimizer=tf.keras.optimizers.Adam(
-        #     learning_rate=args.lr, amsgrad=True),
         optimizer=tf.keras.optimizers.SGD(
-            learning_rate=args.lr, 
-            momentum=args.momentum, 
+            learning_rate=lr_schedule, 
+            # momentum=args.momentum, 
             nesterov=True),
         metrics=['CategoricalAccuracy'])
     model = get_compiled_model(
@@ -118,7 +123,7 @@ def train(args):
         callbacks=callbacks
     )
 
-    print(model.summary())
+    # print(model.summary())
 
     if args.save_to:
         model.save(args.save_to)

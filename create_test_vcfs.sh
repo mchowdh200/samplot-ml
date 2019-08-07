@@ -35,11 +35,13 @@ done
 
 # OUT_DIR=data/giab/VCF/$(basename $MODEL_PATH .h5)
 # VCF=data/giab/VCF/HG002-smoove.genotyped.vcf.gz
-if [ ! -d $OUT_DIR ]; then
-    mkdir $OUT_DIR
-    mkdir $OUT_DIR/VCF
-    mkdir $OUT_DIR/predictions
+if [ -d $OUT_DIR ]; then
+    rm -r $OUT_DIR
 fi
+mkdir $OUT_DIR
+mkdir $OUT_DIR/VCF
+mkdir $OUT_DIR/predictions
+
 BED=$OUT_DIR/predictions/$(basename $MODEL_PATH .h5).bed
 
 python3 run.py predict -mp $MODEL_PATH -h5 -i $DATA_LIST \

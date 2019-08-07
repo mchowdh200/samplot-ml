@@ -20,7 +20,6 @@ for l in open(bed_file, 'r'):
     key = '\t'.join(A[:3])
     predictions[key] = [float(x) for x in A[3:]]
 
-
 # iterate over each record and replace the genotype
 # with the predicted genotypes
 with pysam.VariantFile(vcf_file, 'rb') as VCF:
@@ -30,9 +29,10 @@ with pysam.VariantFile(vcf_file, 'rb') as VCF:
                                           variant.pos,
                                           variant.stop]]) 
         if key in predictions:
-            variant.samples[0].allele_indices = genotypes[
-                np.argmax(predictions[key])]
-            print(str(variant).rstrip())
+            # variant.samples[0].allele_indices = genotypes[
+            #     np.argmax(predictions[key])]
+            if np.argmax(predictions[key]) > 0:
+                print(str(variant).rstrip())
 
 
 
