@@ -1,6 +1,38 @@
-* Workflow for evaluating giab dataset
-** Generate predictions with _./run.py predict_
-** Convert to bed using _pred2bed.py_
-** Annotate vcf using _annotate.py_
-** Filter vcf using _filter_vcf.sh_
-** Run _truvari.sh_ using your vcf of choice
+* Workflow for evaluating test dataset with CNN (i.e. giab/Chaisson data)
+** Run create_test_vcf.sh
+*** Generate predictions with python _run.py predict_
+*** Convert to bed using _pred2bed.py_
+*** Annotate vcf using _annotate.py_
+**** TODO Currently I'm just filtering here
+*** Filter vcf using _filter_vcf.sh_ (Not currently used)
+**** TODO I should re-implement this
+** Run _truvari.sh_ using your comparision vcf of choice
+
+
+* Test set experiments
+** HG00514, HG00733, NA19240 data processing
+*** TODO Get Crams
+*** TODO Get truth set VCF
+[ ] Remove length 0 contigs 
+[ ] run fix_vcf script to correct SVLEN
+*** TODO Genotype with smoove to get baseline VCF
+*** TODO Filter with duphold
+*** TODO Filter with CNN model
+*** TODO Run truvari on baseline, duphold and CNN VCF
+
+** Results/Analysis
+*** TODO Truvari statistics
+[ ] Total events from truth set
+[ ] tp/fp/fn, precision/recall/f1 for all methods
+*** TODO Size distribution on truth set
+*** TODO TP and FP size distribution for baseline, duphold and CNN
+*** TODO TP and FP chromosome distribution?
+*** TODO Venn digram of truth set, baseline, duphold, CNN false positives
+
+** Questions
+*** Does CNN/duphold make the same/different mistakes (Venn digram)?
+*** What is duphold good/bad at?
+- Grad cam visualizations of the ML true/false positives
+*** What is the size distribution of duphold/CNN fp intersection/difference
+*** What is the duphold score distribution for CNN tp/fp
+*** What are the ML scores for duphold tp/fp
