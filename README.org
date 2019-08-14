@@ -1,0 +1,109 @@
+#+TITLE: samplot-ml
+* Training Data Workflow
+** 1000 genomes high coverage crams
+*** Download the Cram indices listed on the high_coverage index
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/1000genomes.high_coverage.GRCh38DH.alignment.index
+- Aligned to GRCh38 reference genome
+
+** Get the SV VCF (using GRCh38 ref)
+*** TODO should I look into using the .mergedSV.v8 VCF?
+http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/integrated_sv_map/supporting/GRCh38_positions/ALL.wgs.integrated_sv_map_v1_GRCh38.20130502.svs.genotypes.vcf.gz
+
+** Extract DEL/Non-DEL regions for training set
+#+BEGIN_SRC bash
+bcftools view -i 'SVTYPE="DEL"' $VCF \
+    | bcftools query -f '%CHROM\t%POS\t%INFO/END[\t%SAMPLE,%GT]\n' \ 
+    | python sample_del.py > $OUT/del.sample.bed # from git repo
+#+END_SRC
+- Output to bed file annotated with sample and genotype (REF, HET, ALT)
+- TODO make the variables command line args with flags
+
+
+** Generate training images
+*** gen_img.sh
+#+BEGIN_SRC bash
+cat $BED_FILE | gargs -p $PROCESSES \
+ "bash gen_img.sh \\
+     --chrom {0} --start {1} --end {2} --sample {3} --genotype {4} \\
+     --fasta $FASTA \\
+     --bam-list $CRAM_LIST \\
+     --bam-dir $CRAM_INDEX_DIR \\
+     --out-dir $OUT_DIR/imgs"
+#+END_SRC
+- Use [[https://github.com/brentp/gargs][gargs]] to parse the contents of the Training regions and feed to =gen_img.sh=
+- =$CRAM_LIST= (they're actually crams) can be absolute file paths or urls (must download indices though)
+- =$CRAM_DIR= is the directory containing the CRAM indices
+- TODO upload the cram list of urls to github
+- TODO check if I used a different GRCh38 from "full_analysis_set_plut_decoy_hla"
+
+** Crop images to remove the surrounding text/axes
+#+BEGIN_SRC bash
+bash crop.sh \
+    --processes $NUM_PROCESSES \
+    --data-dir $DATA_DIR
+#+END_SRC
+- Where =$DATA_DIR= is the parent directory containing the img/ directory from
+  the previous step
+- Cropped images will be placed in =$DATA_DIR/crop=
+  
+* Training Procedure
+We use the =run.py= script to train a new model
+
+#+BEGIN_SRC 
+usage: run.py train [-h] [--batch-size BATCH_SIZE] [--epochs EPOCHS]
+                    [--model-type MODEL_TYPE] --data-dir DATA_DIR
+                    [--learning-rate LR] [--momentum MOMENTUM]
+                    [--label-smoothing LABEL_SMOOTHING] [--save-to SAVE_TO]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --batch-size BATCH_SIZE, -b BATCH_SIZE
+                        Number of images to feed to model at a time. (default:
+                        80)
+  --epochs EPOCHS, -e EPOCHS
+                        Max number of epochs to train model. (default: 100)
+  --model-type MODEL_TYPE, -mt MODEL_TYPE
+                        Type of model to train. (default: CNN)
+  --data-dir DATA_DIR, -d DATA_DIR
+                        Root directory of the training data. (default: None)
+  --learning-rate LR, -lr LR
+                        Learning rate for optimizer. (default: 0.0001)
+  --momentum MOMENTUM, -mom MOMENTUM
+                        Momentum term in SGD optimizer. (default: 0.9)
+  --label-smoothing LABEL_SMOOTHING, -ls LABEL_SMOOTHING
+                        Strength of label smoothing (0-1). (default: 0.0)
+  --save-to SAVE_TO, -s SAVE_TO
+                        filename if you want to save your trained model.
+                        (default: None)
+#+END_SRC
+
+
+* Test data workflow
+
+* TODO Test set experiments
+** HG00514, HG00733, NA19240 data processing
+*** TODO Get Crams
+*** TODO Get truth set VCF
+[ ] Remove length 0 contigs 
+[ ] run fix_vcf script to correct SVLEN
+*** TODO Genotype with smoove to get baseline VCF
+*** TODO Filter with duphold
+*** TODO Filter with CNN model
+*** TODO Run truvari on baseline, duphold and CNN VCF
+
+** Results/Analysis
+*** TODO Truvari statistics
+[ ] Total events from truth set
+[ ] tp/fp/fn, precision/recall/f1 for all methods
+*** TODO Size distribution on truth set
+*** TODO TP and FP size distribution for baseline, duphold and CNN
+*** TODO TP and FP chromosome distribution?
+*** TODO Venn digram of truth set, baseline, duphold, CNN false positives
+
+** Questions
+*** Does CNN/duphold make the same/different mistakes (Venn digram)?
+*** What is duphold good/bad at?
+- Grad cam visualizations of the ML true/false positives
+*** What is the size distribution of duphold/CNN fp intersection/difference
+*** What is the duphold score distribution for CNN tp/fp
+*** What are the ML scores for duphold tp/fp
