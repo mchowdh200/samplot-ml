@@ -46,7 +46,7 @@ class ResidualBlock(Conv2DBlock):
     def __call__(self, x):
         temp = x
         x = super().__call__(x)
-        x = tf.keras.layers.LeakyReLU()(x)
+        # x = tf.keras.layers.LeakyReLU()(x)
         # this seems to cause problems when
         # trying to save the model             
         # return tf.keras.layers.LeakyReLU()(temp + x) 
@@ -194,20 +194,6 @@ def ResNeXt(base_filters=32):
                              cardinality=32)(x)
         filters *= 2
 
-    # for i in range(3):
-    #     x = ResNeXtBlock(channels_in=FILTERS,
-    #                      channels_out=FILTERS*4,
-    #                      project_shortcut=False,
-    #                      downsample=i == 0,
-    #                      cardinality=32)(x)
-
-    # for i in range(3):
-    #     x = ResNeXtBlock(channels_in=FILTERS,
-    #                      channels_out=FILTERS*2,
-    #                      project_shortcut=False,
-    #                      downsample=i == 0,
-    #                      cardinality=32)(x)
-
     # output stages
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
     x = tf.keras.layers.Dense(3)(x)
@@ -215,7 +201,7 @@ def ResNeXt(base_filters=32):
     return tf.keras.Model(inputs=inp, outputs=out)
 
             
-def CNN(dropout_rate=0.0):
+def CNN(dropout_rate=0.0, l2_strength=0.001):
     """
     Construct and return an (uncompiled) conv2d model out of Conv2DBlocks.
     """
@@ -225,25 +211,45 @@ def CNN(dropout_rate=0.0):
 
     x = tf.keras.layers.Conv2D(
         filters=32, kernel_size=(7, 7), strides=(1, 1),
-        dilation_rate=(2, 2), padding='valid')(x)
+        dilation_rate=(1, 1), padding='valid',
+        kernel_regularizer=tf.keras.regularizers.l2(l2_strength))(x)
     # TODO compare with batch renormalization
     x = tf.keras.layers.BatchNormalization(renorm=True)(x)
     x = tf.keras.layers.LeakyReLU()(x)
-    x = tf.keras.layers.MaxPool2D(pool_size=(2, 2))(x)
+    x = tf.keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2))(x)
 
-    for i in range(3):
+    for i in range(4):
+        # x = Conv2DBlock(
+        #     n_channels=32*(i+1), n_layers=1, kernel_size=(1, 1),
+        #     batch_norm=True, dropout_rate=dropout_rate)(x)
+        # x = ResidualBlock(
+        #     n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+        #     batch_norm=True, dropout_rate=dropout_rate)(x)
+        # x = ResidualBlock(
+        #     n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+        #     batch_norm=True, dropout_rate=dropout_rate)(x)
+        # x = ResidualBlock(
+        #     n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+        #     batch_norm=True, dropout_rate=dropout_rate)(x)
+
         x = Conv2DBlock(
-            n_channels=32*(i+1), n_layers=1, kernel_size=(1, 1),
+            n_channels=2**(i+5), n_layers=1, kernel_size=(1, 1),
+            kernel_regularizer=tf.keras.regularizers.l2(l2_strength),
             batch_norm=True, dropout_rate=dropout_rate)(x)
         x = ResidualBlock(
-            n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+            n_channels=2**(i+5), n_layers=2, kernel_size=(3, 3),
+            kernel_regularizer=tf.keras.regularizers.l2(l2_strength),
             batch_norm=True, dropout_rate=dropout_rate)(x)
         x = ResidualBlock(
-            n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+            n_channels=2**(i+5), n_layers=2, kernel_size=(3, 3),
+            kernel_regularizer=tf.keras.regularizers.l2(l2_strength),
             batch_norm=True, dropout_rate=dropout_rate)(x)
         x = ResidualBlock(
-            n_channels=32*(i+1), n_layers=2, kernel_size=(3, 3),
+            n_channels=2**(i+5), n_layers=2, kernel_size=(3, 3),
+            kernel_regularizer=tf.keras.regularizers.l2(l2_strength),
             batch_norm=True, dropout_rate=dropout_rate)(x)
+
+
         x = tf.keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2))(x)
 
     x = tf.keras.layers.GlobalAveragePooling2D()(x)

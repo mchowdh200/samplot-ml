@@ -30,10 +30,11 @@ truvari \
     -o $out_dir \
     --reference $reference \
     --pctsim 0 \
-    --sizemax 15000000 \
+    --sizemax 1000000 \
     --sizemin 300 --sizefilt 270 \
     --pctov 0.6 \
     --refdist 20 \
     --noprog \
     --no-ref a \
     # --includebed ~/Repositories/samplot-ml/data/giab/BED/HG002_SVs_Tier1_v0.6.bed \
+    # --sizemax 15000000 \

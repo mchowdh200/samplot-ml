@@ -7,7 +7,7 @@ import pysam
 
 vcf_file=sys.argv[1]
 bed_file=sys.argv[2]
-threshold=sys.argv[3]
+threshold=float(sys.argv[3])
 
 predictions = {}
 genotypes = {0: (0, 0), 1: (0, 1), 2: (1, 1)}

@@ -89,7 +89,7 @@ def train(args):
     # setup training
     callbacks = [
         # tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
-        tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=8,
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=30,
                                          restore_best_weights=True, verbose=1)]
 
     lr_schedule = tf.keras.experimental.CosineDecayRestarts(
@@ -97,8 +97,9 @@ def train(args):
         alpha=0.0001,
         t_mul=2.0,
         m_mul=1.25,
-        # first_decay_steps=np.ceil(n_train/(args.batch_size*2)))
+        # first_decay_steps=np.ceil(n_train/(args.batch_size/2)))
         first_decay_steps=np.ceil(n_train/(args.batch_size*8)))
+
 
     # TODO eventually I'd like to optionally be able to load these from a JSON
     model_params = None
@@ -108,7 +109,7 @@ def train(args):
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=lr_schedule, 
             # momentum=args.momentum, 
-            nesterov=True),
+            nesterov=False),
         metrics=['CategoricalAccuracy'])
     model = get_compiled_model(
         model_index[args.model_type], 
