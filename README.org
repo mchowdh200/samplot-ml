@@ -271,6 +271,25 @@ bash truvari.sh \
 *** NA19240
 [[./figures/NA19240-pr.png]]
 
+** Duphold False Positive DHFFC score histograms
+*** HG002
+[[./figures/HG002-duphold-fp-DHFFC-dist.png]]
+*** HG00514
+[[./figures/HG00514-duphold-fp-DHFFC-dist.png]]
+*** HG00733
+[[./figures/HG00733-duphold-fp-DHFFC-dist.png]]
+*** NA19240
+[[./figures/NA19240-duphold-fp-DHFFC-dist.png]]
+
+** CNN False Positive 0/0 prediction score histograms
+*** HG002
+[[./figures/HG002-notier1-pred-dist.png]]
+*** HG00514
+[[./figures/HG00514-pred-dist.png]]
+*** HG00733
+[[./figures/HG00733-pred-dist.png]]
+*** NA19240
+[[./figures/NA19240-pred-dist.png]]
 
 * /TODO list/
 ** TODO Size distribution of duphold/CNN fp/fn
