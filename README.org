@@ -1,12 +1,11 @@
 #+TITLE: samplot-ml
 * Training Data Workflow
 ** 1000 genomes high coverage crams
-*** Download the Cram indices listed on the high_coverage index
+Download the Cram indices listed on the high_coverage index
 ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/1000genomes.high_coverage.GRCh38DH.alignment.index
 - Aligned to GRCh38 reference genome
 
-** Get the SV VCF (using GRCh38 ref)
-*** TODO should I look into using the .mergedSV.v8 VCF?
+** Get the SV callset VCF (using GRCh38 ref)
 http://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase3/integrated_sv_map/supporting/GRCh38_positions/ALL.wgs.integrated_sv_map_v1_GRCh38.20130502.svs.genotypes.vcf.gz
 
 ** Extract DEL/Non-DEL regions for training set
@@ -17,8 +16,7 @@ bcftools view -i 'SVTYPE="DEL"' $VCF \
 #+END_SRC
 - Output to bed file annotated with sample and genotype (REF, HET, ALT)
 - TODO make the variables command line args with flags
-
-
+  
 ** Generate training images
 *** gen_img.sh
 #+BEGIN_SRC bash
@@ -45,6 +43,9 @@ bash crop.sh \
 - Where =$DATA_DIR= is the parent directory containing the img/ directory from
   the previous step
 - Cropped images will be placed in =$DATA_DIR/crop=
+  
+** TODO Split into train/val sets (file listings)
+- TODO
   
 * Training Procedure
 We use the =run.py= script to train a new model
@@ -77,33 +78,246 @@ optional arguments:
                         (default: None)
 #+END_SRC
 
-
 * Test data workflow
+** HG002 data processing
+*** TODO Get Cram/index
+- TODO
+ 
+*** TODO Genotype with smoove
+- TODO
 
-* TODO Test set experiments
+*** Get VCF and tier 1 regions bed
+ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/analysis/NIST_SVs_Integration_v0.6/HG002_SVs_Tier1_v0.6.vcf.gz
+ftp://ftp-trace.ncbi.nlm.nih.gov/giab/ftp/data/AshkenazimTrio/analysis/NIST_SVs_Integration_v0.6/HG002_SVs_Tier1_v0.6.bed
+**** Filter DELs with =bcftools view=
+
 ** HG00514, HG00733, NA19240 data processing
-*** TODO Get Crams
-*** TODO Get truth set VCF
-[ ] Remove length 0 contigs 
-[ ] run fix_vcf script to correct SVLEN
-*** TODO Genotype with smoove to get baseline VCF
-*** TODO Filter with duphold
+*** Get Crams/indices
+**** HG00514
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/data/CHS/HG00514/high_cov_alignment/
+**** HG00733
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/data/PUR/HG00733/high_cov_alignment/
+**** NA19240
+ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/hgsv_sv_discovery/data/YRI/NA19240/high_cov_alignment/
+
+*** DONE Get truth set VCFs/indices
+ftp://ftp.ncbi.nlm.nih.gov/pub/dbVar/data/Homo_sapiens/by_study/genotype/nstd152
+**** Filter DELs with =bcftools view= and Fix VCFs
+- Remove length 0 contigs (causes problems with truvari otherwise)
+- Run =fix_vcf.py= script to correct SVLEN
+  - For some reason the %INFO/END field is just start + 1 so we need to
+    use SVLEN to calculate the true end.
+    
+#+BEGIN_SRC bash
+bcftools view -i 'SVTYPE="DEL"' $TRUTH_SET_VCF \
+    | grep -v "length=0>" \
+    | python fix_vcf.py \
+    | bgzip -c > $FIXED_TRUTH_SET
+tabix $FIXED_TRUTH_SET
+#+END_SRC
+
+*** Genotype with smoove (annotated with duphold) to get baseline VCF
+Use the following command
+#+BEGIN_SRC bash
+smoove call \
+    --outdir $OUT_DIR \
+    --processes $PROCESSES \
+    --name $SAMPLE_NAME \ # eg HG00514
+    --exclude $BED_DIR/exclude.cnvnator_100bp.GRCh38.20170403.bed
+    --fasta $FASTA # 
+    --removepr \
+    --genotype \
+    --duphold \
+    $CRAM_PATH
+#+END_SRC
+
+You can get the exclude regions bed for GRCh38 from [[https://github.com/hall-lab/speedseq/blob/master/annotations/exclude.cnvnator_100bp.GRCh38.20170403.bed][here]]
+
+**** Use GRCh38_full_analysis_set_plus_decoy_hla.fa reference genome
+[[ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa][fasta]]
+[[ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai][index]]
+
+*** Generate images
+**** From smoove generated VCF, extract just the dels
+#+BEGIN_SRC bash
+bcftools view -i 'SVTYPE="DEL"' $SAMPLE-smoove.genotyped.vcf.gz \
+    | bgzip -c > $SAMPLE-smoove.genotyped.del.vcf.gz
+#+END_SRC
+**** TODO from VCF to bed, pipe to gargs, call gen_img.sh
+#+BEGIN_SRC bash
+bcftools query -f '%CHROM\t%POS\t%INFO/END[\t%SAMPLE\t%GT]\n' \
+    $SAMPLE-smoove.genotyped.del.vcf.gz  | gargs -p $PROCESSES \
+    "bash gen_img.sh \\
+        --chrom {0} --start {1} --end {2} --sample $SAMPLE --genotype DEL \\
+        --fasta $FASTA \\
+        --bam-dir $PATH_TO_CRAM \\
+        --out-dir $OUT_DIR/imgs"
+#+END_SRC
+
+*** TODO Crop images
+#+BEGIN_SRC bash
+bash crop.sh \
+    --processes $NUM_PROCESSES \
+    --data-dir $DATA_DIR
+#+END_SRC
+- Where =$DATA_DIR= is the parent directory containing the img/ directory from
+  the previous step
+- Cropped images will be placed in =$DATA_DIR/crop=
+  
+*** Create file listing for images
+#+BEGIN_SRC bash
+cd $SAMPLE_DIR # parent directory of cropped images
+find $(pwd)/crop/*.png > $IMAGE_LIST
+#+END_SRC
+
+*** Filter using duphold annotations
+#+BEGIN_SRC bash
+bcftools view -i 'DHFFC<0.7' $BASELINE_VCF | bgzip -c > dhffc.lt.0.7.vcf.gz
+tabix dhffc.lt.0.7.vcf.gz
+#+END_SRC
+
 *** TODO Filter with CNN model
+#+BEGIN_SRC bash
+bash create_test_vcfs.sh \
+    --model-path $MODEL_PATH \
+    --data-list $IMAGE_LIST \
+    --vcf $BASELINE_VCF \ # i.e. the smoove genotyped vcf
+    --out-dir $OUT_DIR
+#+END_SRC
+
 *** TODO Run truvari on baseline, duphold and CNN VCF
+#+BEGIN_SRC bash
+bash truvari.sh \
+    --comp-vcf $COMP_VCF \
+    --base-vcf $TRUTH_SET_VCF \
+    --reference $REF \
+    --out-dir $OUT_DIR
+#+END_SRC
 
-** Results/Analysis
-*** TODO Truvari statistics
-[ ] Total events from truth set
-[ ] tp/fp/fn, precision/recall/f1 for all methods
-*** TODO Size distribution on truth set
-*** TODO TP and FP size distribution for baseline, duphold and CNN
-*** TODO TP and FP chromosome distribution?
-*** TODO Venn digram of truth set, baseline, duphold, CNN false positives
+* Results/Analysis
+** Truvari statistics
+|--------------------------------+--------+-------+-------|
+| HG002 (Ashkenazim) with tier 1 | Smoove | DHFFC |   CNN |
+|--------------------------------+--------+-------+-------|
+| TP                             |   1496 |  1488 |  1489 |
+| FP                             |     83 |    33 |    62 |
+| FN                             |    276 |   284 |   283 |
+| Precision                      |  0.947 | 0.978 |  0.96 |
+| Recall                         |  0.844 | 0.840 | 0.840 |
+| F1                             |  0.893 | 0.904 | 0.896 |
+|--------------------------------+--------+-------+-------|
+| FP Intersection                |        |       |       |
+|--------------------------------+--------+-------+-------|
 
-** Questions
-*** Does CNN/duphold make the same/different mistakes (Venn digram)?
-*** What is duphold good/bad at?
-- Grad cam visualizations of the ML true/false positives
-*** What is the size distribution of duphold/CNN fp intersection/difference
-*** What is the duphold score distribution for CNN tp/fp
-*** What are the ML scores for duphold tp/fp
+|-----------------------------------+--------+-------+-------|
+| HG002 (Ashkenazim) without tier 1 | Smoove | DHFFC |   CNN |
+|-----------------------------------+--------+-------+-------|
+| TP                                |   1787 |  1764 |  1774 |
+| FP                                |    452 |   276 |   335 |
+| FN                                |    893 |   916 |   906 |
+| Precision                         |  0.798 | 0.865 | 0.841 |
+| Recall                            |  0.667 | 0.658 | 0.662 |
+| F1                                |  0.727 | 0.747 | 0.741 |
+|-----------------------------------+--------+-------+-------|
+| FP Intersection                   |        |       |   253 |
+|-----------------------------------+--------+-------+-------|
+
+|-----------------------+--------+-------+-------|
+| HG00514 (Han Chinese) | Smoove | DHFFC |   CNN |
+|-----------------------+--------+-------+-------|
+| TP                    |   1861 |  1837 |  1836 |
+| FP                    |    938 |   596 |   469 |
+| FN                    |    861 |   881 |   886 |
+| Precision             |  0.665 | 0.755 | 0.797 |
+| Recall                |  0.684 | 0.676 | 0.675 |
+| F1                    |  0.674 | 0.713 | 0.730 |
+|-----------------------+--------+-------+-------|
+| FP Intersection       |        |       |   377 |
+|-----------------------+--------+-------+-------|
+
+|------------------------+--------+-------+-------|
+| HG00733 (Puerto Rican) | Smoove | DHFFC |   CNN |
+|------------------------+--------+-------+-------|
+| TP                     |   1236 |  1216 |  1208 |
+| FP                     |   1131 |   808 |   572 |
+| FN                     |   1507 |  1527 |  1533 |
+| Precision              |  0.522 | 0.601 | 0.679 |
+| Recall                 |  0.451 | 0.443 | 0.441 |
+| F1                     |  0.484 | 0.510 | 0.534 |
+|------------------------+--------+-------+-------|
+| FP Intersection        |        |       |   470 |
+|------------------------+--------+-------+-------|
+
+|-------------------+--------+-------+-------|
+| NA19240 (Yoruban) | Smoove | DHFFC |   CNN |
+|-------------------+--------+-------+-------|
+| TP                |   1494 |  1470 |  1443 |
+| FP                |   1070 |   801 |   575 |
+| FN                |   1711 |  1735 |  1762 |
+| Precision         |  0.583 | 0.647 | 0.715 |
+| Recall            |  0.566 | 0.459 | 0.450 |
+| F1                |  0.518 | 0.537 | 0.553 |
+|-------------------+--------+-------+-------|
+| FP Intersection   |        |       |   505 |
+|-------------------+--------+-------+-------|
+
+** PR Curves 
+*** HG002
+[[./figures/HG002-notier1-pr.png]]
+*** HG00514
+[[./figures/HG00514-pr.png]]
+*** HG00733
+[[./figures/HG00733-pr.png]]
+*** NA19240
+[[./figures/NA19240-pr.png]]
+
+** Duphold False Positive DHFFC score histograms
+*** HG002
+[[./figures/HG002-duphold-fp-DHFFC-dist.png]]
+*** HG00514
+[[./figures/HG00514-duphold-fp-DHFFC-dist.png]]
+*** HG00733
+[[./figures/HG00733-duphold-fp-DHFFC-dist.png]]
+*** NA19240
+[[./figures/NA19240-duphold-fp-DHFFC-dist.png]]
+
+** CNN False Positive 0/0 prediction score histograms
+*** HG002
+[[./figures/HG002-notier1-pred-dist.png]]
+*** HG00514
+[[./figures/HG00514-pred-dist.png]]
+*** HG00733
+[[./figures/HG00733-pred-dist.png]]
+*** NA19240
+[[./figures/NA19240-pred-dist.png]]
+
+* /TODO list/
+** TODO Size distribution of duphold/CNN fp/fn
+- Just analyze the fn's made by duphold/CNN but not smoove
+  
+** DONE Size distributions over the truth sets
+
+** TODO Intersection/difference stats of duphold/CNN/smoove tp/fp/fn
+- ie. does duphold/CNN make largely the same or different mistakes
+
+** TODO Grad cam visualizations of the set of tp/fp/fn
+- Just make a representative sample of true positives
+- Again, for fn's just do the ones not made by smoove
+
+** TODO dist of score values for tp/fp (CNN and duphold)
+*** Duphold fp DHFFC score distribution
+*** CNN fp DHFFC score distribution
+*** CNN fp prediction score distribution
+
+
+
+** TODO HG002 with/without tier 1 regions
+*** DONE figure if tier 1 regions can be applied to other genomes
+- if yes then do it. *(it can't)*
+
+
+** DONE PR-curves
+
+** DONE label ancestry of genomes
+
+** TODO Train another low coverage model later and do some testing

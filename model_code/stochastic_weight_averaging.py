@@ -3,13 +3,16 @@ import numpy as np
 import utils
 
 class StochasticWeightAveraging(tf.keras.callbacks.Callback):
-    def __init__(self):
-        super().__init__()
+    # def __init__(self):
+    #     super().__init__()
+
+    def on_train_begin(self, logs=None):
         self.w_swa = self.model.get_weights()
 
     def on_epoch_end(self, epoch, logs=None):
+        print(f"Epoch {epoch} Updating average weights...")
         for i, _ in enumerate(self.model.layers):
-            self.w_swa[i] = ((self.w_swa*epoch + self.model.get_weights()[i]) / (epoch + 1))
+            self.w_swa[i] = ((self.w_swa[i]*(epoch + 1) + self.model.get_weights()[i]) / (epoch + 2))
 
     def on_train_end(self, logs=None):
         self.model.set_weights(self.w_swa)
@@ -22,7 +25,7 @@ def fit_with_swa(model, dataset, steps_per_epoch, save_path=None, lr=0.001,
                  epochs=5, label_smoothing=0.05,):
 
     """
-    Given a pretrained model.  Perform stochastic weight averaging with given
+    Given a pretrained model.  Perform stochastic weight averaging with 
     training tf.data.Dataset.  Upon completion, replace model weights, then
     performs one last forward pass on the dataset in train mode to recompute
     the batch normalization statistics with the new weights.
@@ -40,14 +43,15 @@ def fit_with_swa(model, dataset, steps_per_epoch, save_path=None, lr=0.001,
         dataset,
         steps_per_epoch=steps_per_epoch,
         epochs=epochs,
-        callbacks=[StochasticWeightAveraging()]
+        callbacks=[StochasticWeightAveraging()],
+        verbose=1
     )
 
     # forward pass to recompute batch norm statistics
     for x, _ in dataset.take(steps_per_epoch):
-        model(x, train=True)
+        model(x, training=True)
 
-    if model.save_path:
+    if save_path:
         model.save(save_path)
     return model
 
@@ -65,8 +69,15 @@ if __name__ == '__main__':
 
     steps_per_epoch = np.ceil(n/BATCH_SIZE)
 
-    model = tf.keras.models.load_model('./saved_models/CNN_8_6.h5')
+    model = tf.keras.models.load_model('./saved_models/CNN_7_16.h5')
 
     fit_with_swa(
         model, dataset, steps_per_epoch,
-        save_path='saved_models/CNN_8_6_SWA.h5')
+        epochs=10,
+        save_path='saved_models/CNN_7_16_SWA.h5',
+        lr=0.1)
+
+
+
+
+

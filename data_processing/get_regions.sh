@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# TODO don't hardcode files/directories
 VCF=data/VCF/ALL.wgs.integrated_sv_map_v1_GRCh38.20130502.svs.genotypes.vcf.gz
 OUT=data/BED
 

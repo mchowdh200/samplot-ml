@@ -4,3 +4,4 @@ __pycache__
 data/
 out/
 old_data/
+saved_models/

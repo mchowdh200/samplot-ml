@@ -15,6 +15,12 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # shape that we want to resize images to.  Original images are 2090 x 575
 ORIG_SHAPE = [575, 2090, 3]
+
+# amount to crop away during random cropping augmentation
+# RAND_CROP = np.array([9, 31, 0])
+RAND_CROP = np.array([0, 31, 0])
+
+# we down scale each dimension by constant factor
 SCALE_FACTOR = 8
 IMAGE_SHAPE = np.array([np.ceil(ORIG_SHAPE[0]/SCALE_FACTOR).astype(int), 
                         np.ceil(ORIG_SHAPE[1]/SCALE_FACTOR).astype(int), 
@@ -92,12 +98,6 @@ def get_dataset(data_dir, batch_size=32,
 
     label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(labels, tf.int64))
 
-    # if augmentation:
-    #     image_ds = image_ds.concatenate(
-    #         image_ds.map(tf.image.flip_left_right,
-    #                      num_parallel_calls=AUTOTUNE))
-    #     label_ds = label_ds.concatenate(label_ds)
-    #     n_images *= 2
     image_ds = image_ds.map(tf.io.serialize_tensor)
 
 
@@ -115,13 +115,13 @@ def get_dataset(data_dir, batch_size=32,
     )
     tfrds = tfrds.map(parse, num_parallel_calls=AUTOTUNE)
     
-    if augmentation:
-        tfrds = tfrds.map(tf.image.random_flip_left_right)
-        tfrds = tfrds.map(
-            functools.partial(
-                tf.image.random_crop, size=IMAGE_SHAPE-np.array([5, 31, 0])
-            )
-        )
+    # if augmentation:
+    #     tfrds = tfrds.map(tf.image.random_flip_left_right)
+    #     tfrds = tfrds.map(
+    #         functools.partial(
+    #             tf.image.random_crop, size=IMAGE_SHAPE - RAND_CROP
+    #         )
+    #     )
 
     # combine with labels
     ds = tf.data.Dataset.zip((tfrds, label_ds))
@@ -143,18 +143,33 @@ def get_dataset(data_dir, batch_size=32,
 # -----------------------------------------------------------------------------
 # Model utils
 # -----------------------------------------------------------------------------
-def display_prediction(path, model):
+def display_prediction(path, model, augmentation=False, n_aug=32):
     """
     Given path of an image and a trained model, returns prediction
-    probability distribution over classes class.
+    probability distribution over classes.  Optionally computes prediction
+    with test time prediction where we average the predictions of n_aug derived
+    images with random lr flips and random crops performed.
     """
     # load image and make a prediction from the saved model.
     img = load_image(path)
     img = tf.image.per_image_standardization(img)
-    img = tf.expand_dims(img, axis=0)
-    pred = model(img).numpy()
 
-    return pred[0]
+    if augmentation:
+        transformed_images = []
+        for _ in range(n_aug):
+            transformed_images.append(
+                tf.image.random_crop(tf.image.random_flip_left_right(img),
+                                     size=IMAGE_SHAPE - RAND_CROP))
+        img = tf.stack(transformed_images, axis=0)
+    else:
+        img = tf.expand_dims(img, axis=0)
+
+    pred = model(img)
+
+    if augmentation:
+        return tf.reduce_mean(pred, axis=0).numpy()
+
+    return pred.numpy()[0]
 
 def grad_cam(path, model, final_conv, pre_softmax, out_dir=None):
     """
