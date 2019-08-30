@@ -286,8 +286,11 @@ bash truvari.sh \
 - Again, for fn's just do the ones not made by smoove
 
 ** TODO dist of score values for tp/fp (CNN and duphold)
-*** TODO duphold score dist on tp's unique to CNN
-*** TODO CNN score dist on tp's unique to duphold
+*** Duphold fp DHFFC score distribution
+*** CNN fp DHFFC score distribution
+*** CNN fp prediction score distribution
+
+
 
 ** TODO HG002 with/without tier 1 regions
 *** DONE figure if tier 1 regions can be applied to other genomes
