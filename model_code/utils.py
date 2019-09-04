@@ -279,15 +279,15 @@ def evaluate_model(model, data_dir, batch_size=80):
 
 
 
-if __name__ == '__main__':
+# if __name__ == '__main__':
 
-    model = tf.keras.models.load_model('./saved_models/CNN_7_16.h5')
-    grad_cam(
-        path='data/giab/crop/8_146042946_146043066_DEL.png',
-        model=model, 
-        # final_conv='leaky_re_lu_20',
-        final_conv='leaky_re_lu_39',
-        pre_softmax='dense_1')
+#     model = tf.keras.models.load_model('./saved_models/CNN_7_16.h5')
+#     grad_cam(
+#         path='data/giab/crop/8_146042946_146043066_DEL.png',
+#         model=model, 
+#         # final_conv='leaky_re_lu_20',
+#         final_conv='leaky_re_lu_39',
+#         pre_softmax='dense_1')
 
 
 
