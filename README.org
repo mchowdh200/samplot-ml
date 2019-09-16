@@ -1,7 +1,7 @@
 #+TITLE: samplot-ml
 * Training Data Workflow
 ** 1000 genomes high coverage crams
-Download the Cram indices listed on the high_coverage index
+Download the Cram indices (.crai) listed on the high_coverage index
 ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/data_collections/1000_genomes_project/1000genomes.high_coverage.GRCh38DH.alignment.index
 - Aligned to GRCh38 reference genome
 
@@ -32,7 +32,7 @@ cat $BED_FILE | gargs -p $PROCESSES \
 - =$CRAM_LIST= (they're actually crams) can be absolute file paths or urls (must download indices though)
 - =$CRAM_DIR= is the directory containing the CRAM indices
 - TODO upload the cram list of urls to github
-- TODO check if I used a different GRCh38 from "full_analysis_set_plut_decoy_hla"
+- TODO check if I used a different GRCh38 from "full_analysis_set_plus_decoy_hla"
 
 ** Crop images to remove the surrounding text/axes
 #+BEGIN_SRC bash
@@ -290,6 +290,28 @@ bash truvari.sh \
 [[./figures/HG00733-pred-dist.png]]
 *** NA19240
 [[./figures/NA19240-pred-dist.png]]
+
+
+** Agreement between SVplaudit and CNN using NA12878 from 1000 genomes
+- TODO write this up in more detail
+  - ie. data sources, and how to generate images, etc.
+  
+*** Agreement with SVplaudit
+  #+BEGIN_SRC bash
+bedtools intersect -wb -f 1.0 -r -a $svplaudit_bed -b $pred_bed \
+| python3 svplaudit_agreement.py
+  #+END_SRC
+- For regions with SV plaudit scores < 0.2 and > 0.8 we have ~97% agreement
+- If we don't filter out unambiguous regions then we have ~93% agreement.
+
+*** Agreement with original 1000genomes calls
+  #+BEGIN_SRC bash
+bcftools view -i 'SVTYPE="DEL"' $NA12878_callset \
+| bcftools query -f '%CHROM\t%POS\t%INFO/END\n' \
+| bedtools intersect -wb -f 1.0 -r -a stdin -b $pred_bed \
+| python3 vcf_agreement.py
+  #+END_SRC
+- For the original callset we have ~93% agreement.
 
 * /TODO list/
 ** TODO Size distribution of duphold/CNN fp/fn
