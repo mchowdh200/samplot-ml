@@ -15,7 +15,6 @@ model_index = {
         models.Baseline, 
         input_shape=utils.IMAGE_SHAPE),
     'CNN' : models.CNN,
-    'resnext': models.ResNeXt
 }
 
 
@@ -89,7 +88,7 @@ def train(args):
     # setup training
     callbacks = [
         # tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
-        tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=30,
+        tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=10,
                                          restore_best_weights=True, verbose=1)]
 
     lr_schedule = tf.keras.experimental.CosineDecayRestarts(

@@ -1,17 +1,23 @@
 #!/bin/bash
 
+data_dir=$1 # parent directory where cropped image dir can be found
+data_list=$(ls $data_dir/crop)
 
-DATA=$1 # eg data/high_cov or data/low_cov
-ls $DATA/crop > $DATA/data_list.txt
-FILE=$DATA/data_list.txt
+# filter genomes related to test data out of this set
+exclude=(NA12878 NA12891 NA12892 
+         HG00512 HG00513 HG00514 
+         HG00731 HG00732 HG00733
+         NA19238 NA19239 NA19240) 
+exclude=$(echo ${exclude[@]}|tr " " "|") # construct regex from array
+data_list=$(echo "$data_list" | grep -E -v "$exclude")
 
-RATIO=0.95
-LINES=$(wc -l $FILE | cut -f1 -d' ')
-TRAIN_LINES=$(python -c "from math import ceil; print(ceil($RATIO*$LINES))")
-let TEST_LINES=$LINES-$TRAIN_LINES
+# split into train/validation sets
+ratio=0.95
+lines=$(echo "$data_list" | wc -l )
 
-shuf $FILE > $DATA/shuffled.txt
+train_lines=$(python -c "from math import ceil; print(ceil($ratio*$lines))")
+let test_lines=$lines-$train_lines
+data_list=$(echo "$data_list" | shuf)
 
-head $DATA/shuffled.txt --lines=$TRAIN_LINES > $DATA/train.txt
-tail $DATA/shuffled.txt --lines=$TEST_LINES > $DATA/val.txt
-
+echo "$data_list" | head --lines=$train_lines > $data_dir/train.txt
+echo "$data_list" | tail --lines=$test_lines > $data_dir/val.txt

@@ -29,12 +29,6 @@ done
 [[ -z $VCF ]] && echo Missing argument --vcf && exit 1
 [[ -z $OUT_DIR ]] && echo Missing argument --out-dir && exit 1
 
-
-# MODEL_PATH=$1
-# DATA_LIST=data/giab/giab_list.txt
-
-# OUT_DIR=data/giab/VCF/$(basename $MODEL_PATH .h5)
-# VCF=data/giab/VCF/HG002-smoove.genotyped.vcf.gz
 if [ -d $OUT_DIR ]; then
     rm -r $OUT_DIR
 fi
@@ -44,16 +38,8 @@ mkdir $OUT_DIR/predictions
 
 BED=$OUT_DIR/predictions/$(basename $MODEL_PATH .h5).bed
 
-python3 run.py predict -mp $MODEL_PATH -h5 -i $DATA_LIST \
+python3 ../model_code/run.py predict -mp $MODEL_PATH -h5 -i $DATA_LIST \
     | python3 pred2bed.py > $OUT_DIR/predictions/$(basename $MODEL_PATH .h5).bed
 
 python3 annotate.py $VCF $BED | bgzip -c > $OUT_DIR/VCF/ml.vcf.gz
 tabix $OUT_DIR/VCF/ml.vcf.gz
-
-
-# bash filter_vcf.sh $OUT_DIR
-# source deactivate
-
-
-
-
