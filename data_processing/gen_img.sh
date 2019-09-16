@@ -44,7 +44,7 @@ done
 [[ -z $END ]] && echo Missing argument --end && exit 1
 [[ -z $SAMPLE ]] && echo Missing argument --sample && exit 1
 [[ -z $GENOTYPE ]] && echo Missing argument --genotype && exit 1
-[[ -z $FASTA ]] && echo Missing argument --fasta && exit 1
+# [[ -z $FASTA ]] && echo Missing argument --fasta && exit 1
 # [[ -z $BAM_LIST ]] && echo Missing argument --bam-list && exit 1
 [[ -z $BAM_DIR ]] && echo Missing argument --bam-dir && exit 1
 [[ -z $OUT_DIR ]] && echo Missing argument --out-dir && exit 1
@@ -67,14 +67,17 @@ OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
 echo $OUT
 
 if [ ! -f $OUT ]; then
-
+    if [[ ! -z $FASTA ]]; then
+        $FASTA_FLAG="-r $FASTA"
+    fi
+    
     if [[ $(( $END - $START )) -gt 1000000 ]]; then
         # Too large to plot. Just plot flanking regions and 500 bases around breakpoints
         samplot.py \
-            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA --zoom 500
+            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA_FLAG --zoom 500
     else
         samplot.py \
-            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA
+            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA_FLAG
     fi
 fi
 cd $START_DIR
