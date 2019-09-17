@@ -25,6 +25,9 @@ while (( "$#" )); do
         -l|--bam-list)
             BAM_LIST=$2
             shift 2;;
+        --sep-by-chrom)
+            SEP_BY_CHROM=true
+            shift 1;;
         -d|--bam-dir)
             BAM_DIR=$2
             shift 2;;
@@ -58,26 +61,28 @@ cd $BAM_DIR
 if [[ -z $BAM_LIST ]]; then # no list provided; use BAM_DIR contents
     # BAMS=$BAM_DIR/$(ls BAM_DIR)
     BAMS=$(find $BAM_DIR -name *.cram -or -name *.bam)
+
+elif [[ ! -z $SEP_BY_CHROM ]]; then # hack!
+    BAMS=$(grep -P "(?=.*$CHROM\.)(?=.*$SAMPLE)" $BAM_LIST)
 else
     BAMS=$(grep $SAMPLE $BAM_LIST)
 fi
-
 # output file
 OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
 echo $OUT
 
 if [ ! -f $OUT ]; then
     if [[ ! -z $FASTA ]]; then
-        $FASTA_FLAG="-r $FASTA"
+        $FASTA_FLAG="-r $FASTA" # if we didn't provide fasta then the flag var will be unset
     fi
     
     if [[ $(( $END - $START )) -gt 1000000 ]]; then
         # Too large to plot. Just plot flanking regions and 500 bases around breakpoints
         samplot.py \
-            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA_FLAG --zoom 500
+            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT $FASTA_FLAG --zoom 500
     else
         samplot.py \
-            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT -r $FASTA_FLAG
+            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT $FASTA_FLAG 
     fi
 fi
 cd $START_DIR
