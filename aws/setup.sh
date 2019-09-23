@@ -31,6 +31,7 @@ sudo apt-get update -y
 sudo apt-get install -y neovim
 git clone https://github.com/mchowdh200/.vim.git ~/.vim
 mkdir ~/.config
+mkdir ~/.config/nvim
 printf "set runtimepath^=~/.vim runtimepath+=~/.vim/after\nlet &packpath=&runtimepath\nsource ~/.vimrc" > ~/.config/nvim/init.vim
 pip install jedi neovim
 echo "alias vim=nvim" >> ~/.profile
