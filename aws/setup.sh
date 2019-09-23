@@ -15,23 +15,28 @@ sudo mkdir /mnt/local
 sudo mount /dev/nvme0n1 /mnt/local
 sudo chown ubuntu /mnt/local
 
-# tmux/vim setup
+# anaconda
+wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
+bash ~/miniconda.sh -b -p $HOME/miniconda
+eval "$($HOME/miniconda/bin/conda shell.bash hook)"
+conda init
+conda config --add channels bioconda
+
+# tmux/neovim setup
 echo "source-file ~/.tmux.d/.tmux.conf" > .tmux.conf
 git clone https://github.com/mchowdh200/.tmux.d.git
 
-sudo apt-get install -y vim
+sudo apt-get install -y python3-neovim
 git clone https://github.com/mchowdh200/.vim.git
+printf "set runtimepath^=~/.vim runtimepath+=~/.vim/after\nlet &packpath=&runtimepath\nsource ~/.vimrc" > ~/.config/nvim/init.vim
+pip install jedi neovim
+echo "alias vim=nvim" >> ~/.profile
 
 # setup path
 mkdir /mnt/local/bin
 export PATH="$PATH:/mnt/local/bin"
 
 # setup samplot with anaconda
-wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh
-bash ~/miniconda.sh -b -p $HOME/miniconda
-eval "$($HOME/miniconda/bin/conda shell.bash hook)"
-conda init
-conda config --add channels bioconda
 conda create -y --name samplot
 conda activate samplot
 conda install -y samplot
