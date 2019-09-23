@@ -23,18 +23,20 @@ conda init
 conda config --add channels bioconda
 
 # tmux/neovim setup
-echo "source-file ~/.tmux.d/.tmux.conf" > .tmux.conf
-git clone https://github.com/mchowdh200/.tmux.d.git
+echo "source-file ~/.tmux.d/.tmux.conf" > ~/.tmux.conf
+git clone https://github.com/mchowdh200/.tmux.d.git ~/.tmux.d
 
-sudo apt-get install -y python3-neovim
-git clone https://github.com/mchowdh200/.vim.git
+sudo add-apt-repository ppa:neovim-ppa/stable -y
+sudo apt-get update -y
+sudo apt-get install -y neovim
+git clone https://github.com/mchowdh200/.vim.git ~/.vim
 printf "set runtimepath^=~/.vim runtimepath+=~/.vim/after\nlet &packpath=&runtimepath\nsource ~/.vimrc" > ~/.config/nvim/init.vim
 pip install jedi neovim
 echo "alias vim=nvim" >> ~/.profile
 
 # setup path
 mkdir /mnt/local/bin
-export PATH="$PATH:/mnt/local/bin"
+echo "PATH=$PATH:/mnt/local/bin" >> ~/.profile
 
 # setup samplot with anaconda
 conda create -y --name samplot
