@@ -3,15 +3,24 @@
 
 set exuo pipefail
 
-# mount storage
-export TMPDIR=/mnt/local
+# some common dependencies
 sudo apt-get update
 sudo apt-get install -y build-essential git libfuse-dev libcurl4-openssl-dev libxml2-dev mime-support automake libtool pkg-config libssl-dev ncurses-dev awscli python-pip libbz2-dev liblzma-dev unzip openjdk-8-jre-headless
+
+# mount storage
+export TMPDIR=/mnt/local
 sudo mkfs -t ext4 /dev/nvme0n1
 sudo mkdir /mnt/local
 sudo mkdir /mnt/local
 sudo mount /dev/nvme0n1 /mnt/local
 sudo chown ubuntu /mnt/local
+
+# tmux/vim setup
+echo "source-file ~/.tmux.d/.tmux.conf" > .tmux.conf
+git clone https://github.com/mchowdh200/.tmux.d.git
+
+sudo apt-get install -y vim
+git clone https://github.com/mchowdh200/.vim.git
 
 # setup path
 mkdir /mnt/local/bin
