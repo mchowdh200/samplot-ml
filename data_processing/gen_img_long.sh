@@ -45,6 +45,7 @@ function samplot_cmd {
     local bam=$6
     local out_dir=$7
     out=$out_dir/${ch}_${st}_${en}_${sa}_${gt}.png
+    echo $out
     if [[ ! -f $OUT ]]; then
         if [[ $(( $en - $st )) -gt 1000000 ]]; then
             samplot.py -c $ch -s $st -e $en -t $gt -b $bam -o $out --zoom 500
@@ -62,9 +63,10 @@ export -f samplot_cmd
 function get_img {
     local chr=$1
     local sample=$2
-    local bam_list=$3
-    local bam_dir=$4
-    local out_dir=$5
+    local regions_bed=$3
+    local bam_list=$4
+    local bam_dir=$5
+    local out_dir=$6
 
     # echo ----------------------------------------------------------------------
     # echo $chr $sample $bam_list $out_dir
@@ -84,8 +86,8 @@ function get_img {
     # feed the regions from sample & chr to samplot
     grep -P "(?=.*$chr\t)(?=.*$sample)" $regions_bed | gargs \
         "samplot_cmd {0} {1} {2} {3} {4} $bam_file $out_dir"
-    rm $bam_file
-    rm $bai_file
+    # rm $bam_file
+    # rm $bai_file
 }
 export -f get_img
 
@@ -100,8 +102,9 @@ samples=(HG00514 HG00733 NA19240)
 chromosomes=($(echo chr{{1..22},X}))
 
 for sample in ${samples[@]}; do
-    printf '%s\n' "${chromosomes[@]}" | gargs -p 4 "get_img {} $sample $bam_list $bam_dir $out_dir"
+    printf '%s\n' "${chromosomes[@]}" | head -4 | gargs -p 4 "get_img {} $sample $regions_bed $bam_list $bam_dir $out_dir"
 
+    exit
     # TODO instead of for loop just printf '%s\n' "${chromosome[@]}" array into gargs
     # TODO write a function containing the loop body
     # for chr in $chromosomes; do
