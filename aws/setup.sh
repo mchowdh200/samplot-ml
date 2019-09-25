@@ -35,6 +35,7 @@ mkdir ~/.config/nvim
 printf "set runtimepath^=~/.vim runtimepath+=~/.vim/after\nlet &packpath=&runtimepath\nsource ~/.vimrc" > ~/.config/nvim/init.vim
 pip install jedi neovim
 echo "alias vim=nvim" >> ~/.profile
+echo "export EDITOR=nvim" >> ~/.profile
 
 # setup path
 mkdir /mnt/local/bin
