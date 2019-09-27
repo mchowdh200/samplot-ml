@@ -13,12 +13,11 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 # Data utils
 # -----------------------------------------------------------------------------
 
-# shape that we want to resize images to.  Original images are 2090 x 575
+# Original images are 2090 x 575
 ORIG_SHAPE = [575, 2090, 3]
 
 # amount to crop away during random cropping augmentation
-# RAND_CROP = np.array([9, 31, 0])
-RAND_CROP = np.array([0, 31, 0])
+RAND_CROP = np.array([5, 31, 0])
 
 # we down scale each dimension by constant factor
 SCALE_FACTOR = 8
@@ -34,7 +33,7 @@ def get_filenames(data_dir, training='train'):
         return [f'{data_dir}/crop/{fname.rstrip()}' for fname in file]
 
 
-def get_labels(filenames):
+def get_labels(filenames, num_classes=3):
     """
     Filnames are in the following format:
         <chrm>_<start>_<end>_<sample>_<genotype>.png
@@ -42,11 +41,15 @@ def get_labels(filenames):
     Additionally, we apply label smoothing to the categorical labels
     controlled by the parameter eps.
     """
-    labels = [f.split('_')[5].split('.')[0] for f in filenames]
-    label_to_index = {'ref': 0, 'het': 1, 'alt': 2}
+    labels = [f.split('_')[-1].split('.')[0].lower() for f in filenames]
+
+    if num_classes == 3:
+        label_to_index = {'ref': 0, 'het': 1, 'alt': 2}
+    else:
+        label_to_index = {'ref': 0, 'del': 1}
 
 
-    return [tf.keras.utils.to_categorical(label_to_index[l], num_classes=3) 
+    return [tf.keras.utils.to_categorical(label_to_index[l], num_classes=num_classes) 
             for l in labels]
 
 
@@ -74,7 +77,8 @@ def parse(x):
 def get_dataset(data_dir, batch_size=32,
                 training='train', shuffle=True,
                 augmentation=False,
-                return_labels=False):
+                return_labels=False,
+                num_classes=3):
     """
     Create a tensorflow dataset that yields image/label pairs to a model.
     If return_labels is True, then we also return a dataset consisting of just labels
@@ -85,7 +89,7 @@ def get_dataset(data_dir, batch_size=32,
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
     filenames = get_filenames(data_dir, training)
-    labels = get_labels(filenames)
+    labels = get_labels(filenames, num_classes=num_classes)
     n_images = len(filenames)
 
     assert len(filenames) == len(labels)
@@ -115,13 +119,12 @@ def get_dataset(data_dir, batch_size=32,
     )
     tfrds = tfrds.map(parse, num_parallel_calls=AUTOTUNE)
     
-    # if augmentation:
-    #     tfrds = tfrds.map(tf.image.random_flip_left_right)
-    #     tfrds = tfrds.map(
-    #         functools.partial(
-    #             tf.image.random_crop, size=IMAGE_SHAPE - RAND_CROP
-    #         )
-    #     )
+    # create flipped/cropped versions of images on the fly
+    if augmentation:
+        tfrds = tfrds.map(tf.image.random_flip_left_right)
+        tfrds = tfrds.map(
+            functools.partial(
+                tf.image.random_crop, size=IMAGE_SHAPE - RAND_CROP))
 
     # combine with labels
     ds = tf.data.Dataset.zip((tfrds, label_ds))
@@ -143,7 +146,7 @@ def get_dataset(data_dir, batch_size=32,
 # -----------------------------------------------------------------------------
 # Model utils
 # -----------------------------------------------------------------------------
-def display_prediction(path, model, augmentation=False, n_aug=32):
+def display_prediction(path, model, augmentation=False, n_aug=15):
     """
     Given path of an image and a trained model, returns prediction
     probability distribution over classes.  Optionally computes prediction
@@ -167,7 +170,12 @@ def display_prediction(path, model, augmentation=False, n_aug=32):
     pred = model(img)
 
     if augmentation:
-        return tf.reduce_mean(pred, axis=0).numpy()
+        # majority vote prediction -- 
+        x = tf.argmax(pred, axis=-1)
+        x = tf.one_hot(x, depth=3)
+        x = tf.reduce_sum(x, axis=0)
+        return x.numpy()
+
 
     return pred.numpy()[0]
 

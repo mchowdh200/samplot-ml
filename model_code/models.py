@@ -26,7 +26,7 @@ class Conv2DBlock:
                 kernel_regularizer=self.kernel_regularizer, padding='same')
             for i in range(self.n_layers)]
         self.bnorm_layers = [
-            tf.keras.layers.BatchNormalization(renorm=True)
+            tf.keras.layers.BatchNormalization()
             for i in range(self.n_layers)]
         self.leaky_relu_layers = [
             tf.keras.layers.LeakyReLU()
@@ -54,7 +54,7 @@ class ResidualBlock(Conv2DBlock):
         return self.leaky_relu_out(x)
 
 
-def CNN(l2_strength=0.001):
+def CNN(num_classes=3):
     """
     Construct and return an (uncompiled) conv2d model out of Conv2DBlocks.
     """
@@ -62,22 +62,20 @@ def CNN(l2_strength=0.001):
     x = inp
     x = tf.keras.layers.Conv2D(
         filters=32, kernel_size=(7, 7), strides=(1, 1),
-        dilation_rate=(1, 1), padding='valid',
-        kernel_regularizer=tf.keras.regularizers.l2(l2_strength))(x)
-    x = tf.keras.layers.BatchNormalization(renorm=True)(x)
+        dilation_rate=(2, 2), padding='valid')(x)
+    x = tf.keras.layers.BatchNormalization()(x)
     x = tf.keras.layers.LeakyReLU()(x)
     x = tf.keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2))(x)
 
-    for i in range(3):
+    for i in range(4):
         x = Conv2DBlock(
-            n_channels=2**(i+5), n_layers=1, kernel_size=(1, 1),
-            kernel_regularizer=tf.keras.regularizers.l2(l2_strength))(x)
+            n_channels=32*(i+1), n_layers=1, kernel_size=(1, 1))(x)
         x = ResidualBlock(
-            n_channels=2**(i+5), n_layers=2, kernel_size=(3, 3),
-            kernel_regularizer=tf.keras.regularizers.l2(l2_strength))(x)
+            n_channels=32*(i+1), n_layers=3, kernel_size=(3, 3))(x)
         x = ResidualBlock(
-            n_channels=2**(i+5), n_layers=2, kernel_size=(3, 3),
-            kernel_regularizer=tf.keras.regularizers.l2(l2_strength))(x)
+            n_channels=32*(i+1), n_layers=3, kernel_size=(3, 3))(x)
+        x = ResidualBlock(
+            n_channels=32*(i+1), n_layers=3, kernel_size=(3, 3))(x)
         x = tf.keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2))(x)
 
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
@@ -86,7 +84,7 @@ def CNN(l2_strength=0.001):
         x = tf.keras.layers.LeakyReLU()(x)
         x = tf.keras.layers.Dropout(0.5)(x)
 
-    x = tf.keras.layers.Dense(3)(x)
+    x = tf.keras.layers.Dense(num_classes)(x)
     out = tf.keras.layers.Softmax()(x)
     return tf.keras.Model(inputs=inp, outputs=out)
 

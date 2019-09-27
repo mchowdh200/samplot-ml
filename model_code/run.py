@@ -70,6 +70,7 @@ def train(args):
     training_set, n_train = utils.get_dataset(
         batch_size=args.batch_size,
         data_dir=args.data_dir,
+        num_classes=args.num_classes,
         training='train',
         # augmentation=False,
         augmentation=True,
@@ -78,6 +79,7 @@ def train(args):
     val_set, n_val = utils.get_dataset(
         batch_size=args.batch_size,
         data_dir=args.data_dir,
+        num_classes=args.num_classes,
         training='val',
         shuffle=False,
         augmentation=False,
@@ -88,28 +90,41 @@ def train(args):
     # setup training
     callbacks = [
         # tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
-        tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=10,
-                                         restore_best_weights=True, verbose=1)]
+        # tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=100,
+        #                                  restore_best_weights=True, verbose=1)
+        tf.keras.callbacks.ModelCheckpoint(
+            filepath=args.save_to,
+            monitor='val_loss',
+            verbose=1,
+            save_best_only=True)
+    ]
 
     lr_schedule = tf.keras.experimental.CosineDecayRestarts(
         initial_learning_rate=args.lr,
         alpha=0.0001,
         t_mul=2.0,
         m_mul=1.25,
-        # first_decay_steps=np.ceil(n_train/(args.batch_size/2)))
-        first_decay_steps=np.ceil(n_train/(args.batch_size*8)))
+        first_decay_steps=np.ceil(n_train/(args.batch_size/2)))
+        # first_decay_steps=np.ceil(n_train/(args.batch_size*8)))
+        # first_decay_steps=937)
 
 
     # TODO eventually I'd like to optionally be able to load these from a JSON
-    model_params = None
+    model_params = {'num_classes': args.num_classes}
+    if args.num_classes == 2:
+        loss = tf.keras.losses.BinaryCrossentropy
+        metrics=['BinaryAccuracy']
+    else:
+        loss = tf.keras.losses.CategoricalCrossentropy
+        metrics=['CategoricalAccuracy']
     compile_params = dict(
-        loss=tf.keras.losses.CategoricalCrossentropy(
+        loss=loss(
             label_smoothing=args.label_smoothing),
         optimizer=tf.keras.optimizers.SGD(
             learning_rate=lr_schedule, 
-            # momentum=args.momentum, 
-            nesterov=False),
-        metrics=['CategoricalAccuracy'])
+            momentum=args.momentum, 
+            nesterov=True),
+        metrics=metrics)
     model = get_compiled_model(
         model_index[args.model_type], 
         model_params, 
@@ -125,8 +140,8 @@ def train(args):
 
     # print(model.summary())
 
-    if args.save_to:
-        model.save(args.save_to)
+    # if args.save_to:
+    #     model.save(args.save_to)
 
 
 # -----------------------------------------------------------------------------
@@ -187,6 +202,9 @@ train_parser.add_argument(
 train_parser.add_argument(
     '--model-type', '-mt', dest='model_type', type=str, required=False,
     default='CNN', help='Type of model to train.')
+train_parser.add_argument(
+    '--num-classes', '-n', dest='num_classes', type=int, required=False,
+    default='3', help='Number of possible class labels')
 train_parser.add_argument(
     '--data-dir', '-d', dest='data_dir', type=str, required=True,
     help='Root directory of the training data.')
