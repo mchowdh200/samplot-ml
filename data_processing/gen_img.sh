@@ -19,6 +19,9 @@ while (( "$#" )); do
         -g|--genotype)
             GENOTYPE=$2
             shift 2;;
+        -m|--min-mqual)
+            MIN_MQ=$2
+            shift 2;;
         -f|--fasta)
             FASTA=$2
             shift 2;;
@@ -51,12 +54,12 @@ done
 # [[ -z $BAM_LIST ]] && echo Missing argument --bam-list && exit 1
 [[ -z $BAM_DIR ]] && echo Missing argument --bam-dir && exit 1
 [[ -z $OUT_DIR ]] && echo Missing argument --out-dir && exit 1
+[[ -z $MIN_MQ ]] && MIN_MQ=0
 
 # generate image -------------------------------------------------------------
 START_DIR=$PWD
-# CRAI=data/cram-indices
-# OUT_DIR=/scratch/Shares/layer/projects/samplot/ml/data/1kg/high_cov/imgs
 cd $BAM_DIR
+
 
 if [[ -z $BAM_LIST ]]; then # no list provided; use BAM_DIR contents
     # BAMS=$BAM_DIR/$(ls BAM_DIR)
@@ -73,16 +76,16 @@ echo $OUT
 
 if [ ! -f $OUT ]; then
     if [[ ! -z $FASTA ]]; then
-        $FASTA_FLAG="-r $FASTA" # if we didn't provide fasta then the flag var will be unset
+        FASTA_FLAG="-r $FASTA" # if we didn't provide fasta then the flag var will be unset
     fi
     
     if [[ $(( $END - $START )) -gt 1000000 ]]; then
         # Too large to plot. Just plot flanking regions and 500 bases around breakpoints
         samplot.py \
-            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT $FASTA_FLAG --zoom 500
+            -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG --zoom 500
     else
         samplot.py \
-            -c $CHROM -s $START -e $END -t DEL -b $BAMS -o $OUT $FASTA_FLAG 
+            -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG 
     fi
 fi
 cd $START_DIR

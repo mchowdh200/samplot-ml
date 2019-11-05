@@ -17,8 +17,8 @@ genotypes = {0: (0, 0), 1: (0, 1), 2: (1, 1)}
 # and get the probability distribution
 for l in open(bed_file, 'r'):
     A = l.rstrip().split()
-    key = '\t'.join(A[:3])
-    predictions[key] = [float(x) for x in A[3:]]
+    key = '\t'.join(A[:3]) # region
+    predictions[key] = [float(x) for x in A[3:]] # prediction score
 
 # iterate over each record and replace the genotype
 # with the predicted genotypes

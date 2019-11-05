@@ -5,6 +5,7 @@ import argparse
 import functools
 import numpy as np
 import tensorflow as tf
+import tensorflow_addons as tfa
 import utils
 import models
 
@@ -46,13 +47,15 @@ def predict(args):
     if args.image.endswith('.txt'): # list of images
         with open(args.image, 'r') as file:
             for image in file:
-                pred = utils.display_prediction(image.rstrip(), model)
+                pred = utils.display_prediction(image.rstrip(), model,
+                                                augmentation=args.augmentation)
                 print(os.path.splitext(os.path.basename(image))[0], 
-                      pred[0], pred[1], pred[2], sep='\t')
+                      *pred, sep='\t')
     else:
-        pred = utils.display_prediction(args.image, model)
+        pred = utils.display_prediction(args.image, model,
+                                        augmentation=args.augmentation)
         print(os.path.splitext(os.path.basename(args.image))[0], 
-              pred[0], pred[1], pred[2], sep='\t')
+              *pred, sep='\t')
 
 def evaluate(args):
     if args.use_h5:
@@ -96,7 +99,7 @@ def train(args):
             filepath=args.save_to,
             monitor='val_loss',
             verbose=1,
-            save_best_only=True)
+            save_best_only=True),
     ]
 
     lr_schedule = tf.keras.experimental.CosineDecayRestarts(
@@ -104,26 +107,25 @@ def train(args):
         alpha=0.0001,
         t_mul=2.0,
         m_mul=1.25,
-        first_decay_steps=np.ceil(n_train/(args.batch_size/2)))
-        # first_decay_steps=np.ceil(n_train/(args.batch_size*8)))
-        # first_decay_steps=937)
+        first_decay_steps=np.ceil(n_train/(args.batch_size/2))) # ie. two epochs
 
 
     # TODO eventually I'd like to optionally be able to load these from a JSON
     model_params = {'num_classes': args.num_classes}
-    if args.num_classes == 2:
-        loss = tf.keras.losses.BinaryCrossentropy
-        metrics=['BinaryAccuracy']
-    else:
-        loss = tf.keras.losses.CategoricalCrossentropy
-        metrics=['CategoricalAccuracy']
+    loss = tf.keras.losses.CategoricalCrossentropy
+    metrics=['CategoricalAccuracy']
     compile_params = dict(
         loss=loss(
-            label_smoothing=args.label_smoothing),
-        optimizer=tf.keras.optimizers.SGD(
-            learning_rate=lr_schedule, 
-            momentum=args.momentum, 
-            nesterov=True),
+            label_smoothing=args.label_smoothing,
+        ),
+        optimizer=#tfa.optimizers.Lookahead(
+            tfa.optimizers.SGDW(
+                weight_decay=5e-6,
+                learning_rate=lr_schedule,
+                momentum=args.momentum,
+                nesterov=True,
+            ),
+        #),
         metrics=metrics)
     model = get_compiled_model(
         model_index[args.model_type], 
@@ -137,11 +139,6 @@ def train(args):
         epochs=args.epochs,
         callbacks=callbacks
     )
-
-    # print(model.summary())
-
-    # if args.save_to:
-    #     model.save(args.save_to)
 
 
 # -----------------------------------------------------------------------------
@@ -162,6 +159,9 @@ predict_parser.add_argument(
     choices=model_index.keys(), default='CNN', help='Type of model to load.')
 predict_parser.add_argument(
     '--use-h5', '-h5', dest='use_h5', action='store_true')
+predict_parser.add_argument(
+    '--augmentation', '-a', dest='augmentation', action='store_true',
+    help='Use test time augmentation.')
 predict_parser.add_argument(
     '--image', '-i', dest='image', type=str, required=True,
     help='Path of image')

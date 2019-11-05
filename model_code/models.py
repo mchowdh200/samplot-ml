@@ -1,5 +1,6 @@
-import functools
+# import functools
 import tensorflow as tf
+import tensorflow_addons as tfa
 
 
 class Conv2DBlock:
@@ -79,10 +80,9 @@ def CNN(num_classes=3):
         x = tf.keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2))(x)
 
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
-    for i in range(1):
-        x = tf.keras.layers.Dense(1024//(i+1))(x)
-        x = tf.keras.layers.LeakyReLU()(x)
-        x = tf.keras.layers.Dropout(0.5)(x)
+    x = tf.keras.layers.Dense(1024)(x)
+    x = tf.keras.layers.LeakyReLU()(x)
+    x = tf.keras.layers.Dropout(0.5)(x)
 
     x = tf.keras.layers.Dense(num_classes)(x)
     out = tf.keras.layers.Softmax()(x)

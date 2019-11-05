@@ -1,6 +1,6 @@
 import os
 import functools
-import cv2
+# import cv2
 import numpy as np
 import tensorflow as tf
 import matplotlib
@@ -18,6 +18,7 @@ ORIG_SHAPE = [575, 2090, 3]
 
 # amount to crop away during random cropping augmentation
 RAND_CROP = np.array([5, 31, 0])
+# RAND_CROP = np.array([0, 35, 0])
 
 # we down scale each dimension by constant factor
 SCALE_FACTOR = 8
@@ -86,6 +87,9 @@ def get_dataset(data_dir, batch_size=32,
     """
     print(f'GETTING {training.upper()} DATASET')
 
+    #TODO there is a bug in tensorflow 2.0 where using AUTOTUNE
+    # in map() causes linear increase in memory useage until the
+    # program gets killed.  Check back later when the bug is fixed.
     AUTOTUNE = tf.data.experimental.AUTOTUNE
 
     filenames = get_filenames(data_dir, training)
@@ -96,9 +100,9 @@ def get_dataset(data_dir, batch_size=32,
 
     # basic datasets from filenames and their labels
     image_ds = tf.data.Dataset.from_tensor_slices(filenames)
-    image_ds = image_ds.map(load_image, num_parallel_calls=AUTOTUNE)
+    image_ds = image_ds.map(load_image, num_parallel_calls=4)
     image_ds = image_ds.map(tf.image.per_image_standardization, 
-                            num_parallel_calls=AUTOTUNE)
+                            num_parallel_calls=4)
 
     label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(labels, tf.int64))
 
@@ -117,7 +121,7 @@ def get_dataset(data_dir, batch_size=32,
         f"{data_dir}/{training}.tfrec",
         # num_parallel_reads=os.cpu_count(),
     )
-    tfrds = tfrds.map(parse, num_parallel_calls=AUTOTUNE)
+    tfrds = tfrds.map(parse, num_parallel_calls=4)
     
     # create flipped/cropped versions of images on the fly
     if augmentation:
@@ -129,9 +133,9 @@ def get_dataset(data_dir, batch_size=32,
     # combine with labels
     ds = tf.data.Dataset.zip((tfrds, label_ds))
     if shuffle:
-        ds = ds.shuffle(buffer_size=50000)
+        ds = ds.shuffle(buffer_size=10000)
     ds = ds.repeat()
-    ds = ds.batch(batch_size, drop_remainder=True)
+    ds = ds.batch(batch_size, drop_remainder=False)
     # ds = ds.prefetch(buffer_size=n_images//(4*batch_size))
     ds = ds.prefetch(buffer_size=AUTOTUNE)
 
