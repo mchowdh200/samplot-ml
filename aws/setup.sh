@@ -41,10 +41,14 @@ echo "export EDITOR=nvim" >> ~/.profile
 mkdir /mnt/local/bin
 echo "PATH=$PATH:/mnt/local/bin" >> ~/.profile
 
-# setup samplot with anaconda
+# setup conda environments
 conda create -y --name samplot
 conda activate samplot
 conda install -y samplot
+
+conda create -y --name smoove
+conda activate smoove
+conda install -y smoove
 
 # other misc utilities/config
 wget https://github.com/brentp/gargs/releases/download/v0.3.9/gargs_linux -O /mnt/local/bin/gargs
