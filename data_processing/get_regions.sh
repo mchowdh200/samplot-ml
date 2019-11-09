@@ -1,21 +1,18 @@
 #!/bin/bash
 
-# TODO don't hardcode files/directories
-VCF=data/VCF/ALL.wgs.integrated_sv_map_v1_GRCh38.20130502.svs.genotypes.vcf.gz
-OUT=data/BED
+set -e
 
+vcf=$1
+out_dir=$2
 
-bcftools view -i 'SVTYPE="DEL"' $VCF \
-    | bcftools query -f '%CHROM\t%POS\t%INFO/END[\t%SAMPLE,%GT]\n'\
-    | awk '$3-$2 > 500' \
-    | python sample_del.py > $OUT/del.gt500.bed
+bcftools view -i 'SVTYPE="DEL"' $vcf \
+    | bcftools query -f '%CHROM\t%POS\t%INFO/END[,%SAMPLE\t%GT]\n' \
+    | python3 sample_del.py > $out_dir/1kg_regions.bed
 
-bcftools view -i 'SVTYPE="DEL"' $VCF \
-    | bcftools query -f '%CHROM\t%POS\t%INFO/END[\t%SAMPLE,%GT]\n'\
-    | awk '$3-$2 < 500' \
-    | python sample_del.py > $OUT/del.lt500.bed
+rm *.out *.err
 
-bcftools view -i 'SVTYPE="DEL"' $VCF \
-    | bcftools query -f '%CHROM\t%POS\t%INFO/END[\t%SAMPLE,%GT]\n'\
-    | python sample_del.py > $OUT/del.sample.bed
+    # TODO
+    # get all 0/1 and 1/1 genotypes --> del.bed
+    # get sample of 0/0 genotypes --> ref.bed
+    # combine both to get
 
