@@ -7,8 +7,8 @@
 #SBATCH --ntasks=64
 #SBATCH --mem=64gb
 #SBATCH --time=24:00:00               # Time limit hrs:min:sec
-#SBATCH --output=/Users/much8161/Repositories/samplot-ml/out/crop.out
-#SBATCH --error=/Users/much8161/Repositories/samplot-ml/out/crop.err
+#SBATCH --output=/Users/much8161/Repositories/samplot-ml/data_processing/crop.out
+#SBATCH --error=/Users/much8161/Repositories/samplot-ml/data_processing/crop.err
 
 
 # script to take samplot image and crop out the
@@ -60,5 +60,5 @@ SCRIPT_DIR=$PWD
 # DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/1kg/high_cov
 
 cd $DATA_DIR
-ls $DATA_DIR/imgs | gargs -p $PROC "crop {0}"
+ls -U $DATA_DIR/imgs | gargs -p $PROC "crop {0}"
 cd $SCRIPT_DIR

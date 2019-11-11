@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH -p short
+#SBATCH -p long
 #SBATCH --job-name=generate_training_set
 #SBATCH --mail-type=ALL
 #SBATCH --mail-user=much8161@colorado.edu
 #SBATCH --nodes=1
 #SBATCH --ntasks=32
 #SBATCH --mem=128gb
-#SBATCH --time=24:00:00
+#SBATCH --time=72:00:00
 #SBATCH --output=/Users/much8161/Repositories/samplot-ml/data_processing/gen_training.out
 #SBATCH --error=/Users/much8161/Repositories/samplot-ml/data_processing/gen_training.err
 
