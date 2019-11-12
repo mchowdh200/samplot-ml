@@ -22,6 +22,12 @@ while (( "$#" )); do
         --s3-dist)
             s3_dist=$2
             shift 2;;
+        --) # end argument parsing
+            shift
+            break;;
+        -*|--*=) # unsupported flags
+            echo "Error: Unsupported flag $1" >&2
+            exit 1;;
     esac
 done
 
@@ -42,8 +48,8 @@ smoove call -p 2 \
     $download_dir/$cram
 
 # copy results to s3
-aws s3 cp $out_dir/$sample/$sample-smoove.genotyped.vcf.gz $s3_dest/
-aws s3 cp $out_dir/$sample/$sample-smoove.genotyped.vcf.gz.csi $s3_dest/
+aws s3 cp $out_dir/$sample/$sample-smoove.genotyped.vcf.gz $s3_dest
+aws s3 cp $out_dir/$sample/$sample-smoove.genotyped.vcf.gz.csi $s3_dest
 
 # delete local data
 rm -r $out_dir/$sample/
