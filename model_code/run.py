@@ -9,7 +9,7 @@ import tensorflow_addons as tfa
 import utils
 import models
 
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 model_index = {
     'baseline': functools.partial(
@@ -71,6 +71,7 @@ def train(args):
 
     # load data
     training_set, n_train = utils.get_dataset(
+        processes=args.processes,
         batch_size=args.batch_size,
         data_dir=args.data_dir,
         num_classes=args.num_classes,
@@ -80,6 +81,7 @@ def train(args):
     )
 
     val_set, n_val = utils.get_dataset(
+        processes=args.processes,
         batch_size=args.batch_size,
         data_dir=args.data_dir,
         num_classes=args.num_classes,
@@ -131,13 +133,15 @@ def train(args):
         model_index[args.model_type], 
         model_params, 
         compile_params)
+
     model.fit(
         training_set,
         steps_per_epoch=np.ceil(n_train/args.batch_size),
         validation_data=val_set,
         validation_steps=np.ceil(n_val/args.batch_size),
         epochs=args.epochs,
-        callbacks=callbacks
+        callbacks=callbacks,
+        verbose=args.verbose
     )
 
 
@@ -193,6 +197,12 @@ eval_parser.set_defaults(
 train_parser = subparsers.add_parser(
     'train', help='Train a new model.',
     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+train_parser.add_argument(
+    '--verbose', '-v', dest='verbose', type=int, default=1,
+    help='verbosity level passed to keras fit function.')
+train_parser.add_argument(
+    '--processes', '-p', dest='processes', type=int, default=1,
+    help='Number of processes used in fetching data.')
 train_parser.add_argument(
     '--batch-size', '-b', dest='batch_size', type=int, required=False,
     default=80, help='Number of images to feed to model at a time.')

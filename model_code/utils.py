@@ -79,7 +79,9 @@ def get_dataset(data_dir, batch_size=32,
                 training='train', shuffle=True,
                 augmentation=False,
                 return_labels=False,
-                num_classes=3):
+                num_classes=3,
+                processes=1):
+    print("PROCESSES=", processes)
     """
     Create a tensorflow dataset that yields image/label pairs to a model.
     If return_labels is True, then we also return a dataset consisting of just labels
@@ -100,9 +102,9 @@ def get_dataset(data_dir, batch_size=32,
 
     # basic datasets from filenames and their labels
     image_ds = tf.data.Dataset.from_tensor_slices(filenames)
-    image_ds = image_ds.map(load_image, num_parallel_calls=4)
+    image_ds = image_ds.map(load_image, num_parallel_calls=processes)
     image_ds = image_ds.map(tf.image.per_image_standardization, 
-                            num_parallel_calls=4)
+                            num_parallel_calls=processes)
 
     label_ds = tf.data.Dataset.from_tensor_slices(tf.cast(labels, tf.int64))
 
@@ -121,7 +123,7 @@ def get_dataset(data_dir, batch_size=32,
         f"{data_dir}/{training}.tfrec",
         # num_parallel_reads=os.cpu_count(),
     )
-    tfrds = tfrds.map(parse, num_parallel_calls=4)
+    tfrds = tfrds.map(parse, num_parallel_calls=processes)
     
     # create flipped/cropped versions of images on the fly
     if augmentation:
@@ -137,7 +139,7 @@ def get_dataset(data_dir, batch_size=32,
     ds = ds.repeat()
     ds = ds.batch(batch_size, drop_remainder=False)
     # ds = ds.prefetch(buffer_size=n_images//(4*batch_size))
-    ds = ds.prefetch(buffer_size=AUTOTUNE)
+    ds = ds.prefetch(buffer_size=1000)
 
     if return_labels:
         if shuffle:
