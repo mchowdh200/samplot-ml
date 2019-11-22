@@ -45,18 +45,20 @@ HELP_MESSAGE="
 [[ -z $VCF ]] && echo "\nMissing argument -v/--vcf\n" && echo "$HELP_MESSAGE" && exit 1
 [[ -z $OUT_DIR ]] && printf "\nMissing argument -o/--out-dir\n" && echo "$HELP_MESSAGE" && exit 1
 
-if [ -d $OUT_DIR ]; then
-    rm -r $OUT_DIR
-fi
-mkdir $OUT_DIR
-mkdir $OUT_DIR/VCF
-mkdir $OUT_DIR/predictions
 
 [[ ! -z $AUGMENTATION ]] && AUG_FLAG="-a"
-BED=$OUT_DIR/predictions/$(basename $MODEL_PATH .h5).bed
+BED=$OUT_DIR/$(basename $MODEL_PATH .h5).bed
+echo "storing prediction in $BED"
 
-python3 ../model_code/run.py predict -mp $MODEL_PATH -h5 -i $DATA_LIST $AUG_FLAG \
-    | python3 pred2bed.py > $OUT_DIR/predictions/$(basename $MODEL_PATH .h5).bed
+if [[ ! -f $BED ]]; then
+    if [ -d $OUT_DIR ]; then
+        rm -r $OUT_DIR
+    fi
 
-python3 annotate.py $VCF $BED | bgzip -c > $OUT_DIR/VCF/ml.vcf.gz
-tabix $OUT_DIR/VCF/ml.vcf.gz
+    mkdir $OUT_DIR
+        python3 ../model_code/run.py predict -mp $MODEL_PATH -h5 -i $DATA_LIST $AUG_FLAG \
+            | python3 pred2bed.py $BED
+fi
+
+python3 annotate.py $VCF $BED | bgzip -c > $OUT_DIR/ml.vcf.gz
+tabix $OUT_DIR/ml.vcf.gz

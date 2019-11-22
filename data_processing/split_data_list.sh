@@ -12,7 +12,7 @@ data_list=$(ls -U $data_dir/crop)
 
 ratio=0.90
 lines=$(echo "$data_list" | wc -l )
-train_lines=$(python -c "from math import ceil; print(ceil($ratio*$lines))")
+train_lines=$(python -c "from math import ceil; print(int(ceil($ratio*$lines)))")
 let test_lines=$lines-$train_lines
 data_list=$(echo "$data_list" | shuf)
 echo "$data_list" | head --lines=$train_lines > $data_dir/train.txt

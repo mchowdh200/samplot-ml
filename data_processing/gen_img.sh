@@ -74,21 +74,19 @@ fi
 OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
 echo $OUT
 
+samplot_cmd=~/Repositories/samplot/src/samplot.py
 if [ ! -f $OUT ]; then
     if [[ ! -z $FASTA ]]; then
         FASTA_FLAG="-r $FASTA" # if we didn't provide fasta then the flag var will be unset
     fi
     
-    if [[ $(( $END - $START )) -gt 1000000 ]]; then
+    if [[ $(( $END - $START )) -gt 5000 ]]; then
         # Too large to plot. Just plot flanking regions and 500 bases around breakpoints
-        samplot.py \
+        $samplot_cmd \
             -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG --zoom 500
     else
-        samplot.py \
+        $samplot_cmd \
             -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG 
     fi
 fi
 cd $START_DIR
-
-
-#cat data/del.sample.bed | head | gargs 'rj -l log/ -n {0}_{1}_{2}_{3}_{4} -c "bash gen_img.sh {0} {1} {2} {3} {4}"'
