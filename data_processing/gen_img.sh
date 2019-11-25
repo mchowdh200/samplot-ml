@@ -83,7 +83,7 @@ if [ ! -f $OUT ]; then
     if [[ $(( $END - $START )) -gt 5000 ]]; then
         # Too large to plot. Just plot flanking regions and 500 bases around breakpoints
         $samplot_cmd \
-            -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG --zoom 500
+            -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG --zoom 1000
     else
         $samplot_cmd \
             -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG 
