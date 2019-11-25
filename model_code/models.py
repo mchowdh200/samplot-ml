@@ -1,6 +1,6 @@
 # import functools
 import tensorflow as tf
-import tensorflow_addons as tfa
+# import tensorflow_addons as tfa
 
 
 class Conv2DBlock:

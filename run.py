@@ -5,16 +5,16 @@ import argparse
 import functools
 import numpy as np
 import tensorflow as tf
+from data_processing import datasets
+from model_code import models, utils
 import tensorflow_addons as tfa
-import utils
-import models
 
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 model_index = {
     'baseline': functools.partial(
         models.Baseline, 
-        input_shape=utils.IMAGE_SHAPE),
+        input_shape=datasets.IMAGE_SHAPE),
     'CNN' : models.CNN,
 }
 
@@ -70,25 +70,17 @@ def train(args):
     print(args)
 
     # load data
-    training_set, n_train = utils.get_dataset(
-        processes=args.processes,
+    training_set, n_train = datasets.DataReader(
+        num_processes=args.processes,
         batch_size=args.batch_size,
         data_dir=args.data_dir,
-        num_classes=args.num_classes,
-        training='train',
-        # augmentation=False,
-        augmentation=True,
-    )
+        training='train').get_dataset()
 
-    val_set, n_val = utils.get_dataset(
-        processes=args.processes,
+    val_set, n_val = datasets.DataReader(
+        num_processes=args.processes,
         batch_size=args.batch_size,
         data_dir=args.data_dir,
-        num_classes=args.num_classes,
-        training='val',
-        shuffle=False,
-        augmentation=False,
-    )
+        training='val').get_dataset()
 
     print(f"Train on {n_train} examples.  Validate on {n_val} examples.")
 
