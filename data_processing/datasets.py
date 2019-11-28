@@ -1,5 +1,6 @@
 # import functools
 import os
+import sys
 import numpy as np
 import tensorflow as tf
 # import matplotlib.pyplot as plt
@@ -177,7 +178,7 @@ class DataReader:
         example = tf.io.parse_single_example(serialized_example, features)
         image = DataReader._parse_image(example['image'])
         label = example['label']
-        return image, tf.one_hot(label, depth=3, dtype=tf.int64)
+        return tf.image.per_image_standardization(image), tf.one_hot(label, depth=3, dtype=tf.int64)
     
     def get_dataset(self):
         n_images = len([_ for _ in open(f"{self.data_dir}/{self.training}.txt")])
@@ -218,16 +219,19 @@ class DataReader:
         
 
 if __name__ == "__main__":
+
+    data_dir = sys.argv[1]
+
     # we're just writing datasets, so don't use the gpu
     # (runs out of gpu memory otherwise)
     os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 
     print('Writing training set to tfrecords')
     DataWriter(
-        data_dir = '/home/murad/data/1kg_high_cov',
+        data_dir = data_dir,
         training = 'train').to_tfrecords(imgs_per_record=1000)
 
     print('Writing validation set to tfrecords')
     DataWriter(
-        data_dir = '/home/murad/data/1kg_high_cov',
+        data_dir = data_dir,
         training = 'val').to_tfrecords(imgs_per_record=1000)
