@@ -74,7 +74,7 @@ fi
 OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
 echo $OUT
 
-samplot_cmd=~/Repositories/samplot/src/samplot.py
+samplot_cmd=~/samplot/src/samplot.py
 if [ ! -f $OUT ]; then
     if [[ ! -z $FASTA ]]; then
         FASTA_FLAG="-r $FASTA" # if we didn't provide fasta then the flag var will be unset
