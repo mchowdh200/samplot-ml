@@ -23,3 +23,5 @@ cat "../data_listings/1kg_smoove_genotyped_exclude.bed" \
         --bam-dir /mnt/local/data/CRAM \\
         --out-dir /mnt/local/data/imgs"
 
+aws s3 cp --recursive /mnt/local/data/imgs s3://layerlab/samplot-ml/1kg/exclude_ref_regions/
+
