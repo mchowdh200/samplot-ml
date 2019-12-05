@@ -12,7 +12,7 @@ export TMPDIR=/mnt/local
 # sudo mkfs -t ext4 /dev/nvme0n1
 sudo mkfs -t ext4 /dev/nvme1n1
 sudo mkdir /mnt/local
-sudo mount /dev/nvme0n1 /mnt/local
+sudo mount /dev/nvme1n1 /mnt/local
 sudo chown ubuntu /mnt/local
 
 # conda setup -------------------------------------------------------------------------------------
