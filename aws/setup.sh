@@ -86,11 +86,7 @@ cd -
 conda create -y --name samplot
 conda activate samplot
 conda install -y python=3.6 matplotlib numpy cython
-# git clone https://github.com/pysam-developers/pysam.git ~/pysam
-wget https://github.com/pysam-developers/pysam/archive/v0.15.3.zip
-unzip v0.15.3.zip
-cd pysam-0.15.3
-python setup.py install
+pip install pysam
 git clone https://github.com/ryanlayer/samplot.git ~/samplot
 conda deactivate
 
