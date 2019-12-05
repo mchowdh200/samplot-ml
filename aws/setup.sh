@@ -9,8 +9,8 @@ sudo apt-get install -y build-essential git libfuse-dev libcurl4-openssl-dev lib
 
 # mount storage -----------------------------------------------------------------------------------
 export TMPDIR=/mnt/local
-sudo mkfs -t ext4 /dev/nvme0n1
-sudo mkdir /mnt/local
+# sudo mkfs -t ext4 /dev/nvme0n1
+sudo mkfs -t ext4 /dev/nvme1n1
 sudo mkdir /mnt/local
 sudo mount /dev/nvme0n1 /mnt/local
 sudo chown ubuntu /mnt/local
