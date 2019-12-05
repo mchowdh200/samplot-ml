@@ -10,8 +10,8 @@ n_tasks=$1
 
 # get ref
 echo "Downloading reference genome..."
-aws s3 cp s3://1000genomes/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa /mnt/local/ref/
-aws s3 cp s3://1000genomes/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai /mnt/local/ref/
+aws s3 cp s3://1000genomes/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa /mnt/local/data/ref/
+aws s3 cp s3://1000genomes/technical/reference/GRCh38_reference_genome/GRCh38_full_analysis_set_plus_decoy_hla.fa.fai /mnt/local/data/ref/
 
 # get the 1kg CRAIs
 echo "Downloading cram indices..."
