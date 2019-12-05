@@ -41,15 +41,57 @@ echo "export EDITOR=nvim" >> ~/.profile
 mkdir /mnt/local/bin
 echo "PATH=$PATH:/mnt/local/bin" >> ~/.profile
 
+# install htslib ----------------------------------------------------------------------------------
+wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2
+bunzip2 htslib-1.9.tar.bz2
+tar -xvf htslib-1.9.tar
+cd htslib-1.9
+autoheader
+autoconf
+./configure --enable-libcurl --enable-s3
+make
+sudo make install
+echo "export LD_LIBRARY_PATH=/usr/local/lib" >> ~/.profile
+echo "export HTSLIB_LIBRARY_DIR=/usr/local/lib" >> ~/.profile
+echo "export HTSLIB_INCLUDE_DIR=/usr/local/include" >> ~/.profile
+cd -
+
+# install samtools --------------------------------------------------------------------------------
+wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2
+bunzip2 samtools-1.9.tar.bz2
+tar -xvf samtools-1.9.tar
+cd samtools-1.9
+autoheader
+autoconf -Wno-syntax
+./configure --with-htslib=system --enable-configure-htslib
+make
+sudo make install
+cd -
+
+# install bcftools --------------------------------------------------------------------------------
+wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2
+bunzip2 bcftools-1.9.tar.bz2
+tar -xvf bcftools-1.9
+cd bcftools-1.9
+autoheader
+autoconf -Wno-syntax
+./configure --with-htslib=system --enable-configure-htslib
+make
+sudo make install
+cd -
+
+
 # setup conda environments
 # samplot -----------------------------------------------------------------------------------------
 conda create -y --name samplot
 conda activate samplot
 conda install -y python=3.6 matplotlib numpy cython
-git clone https://github.com/pysam-developers/pysam.git
-cd pysam
+# git clone https://github.com/pysam-developers/pysam.git ~/pysam
+wget https://github.com/pysam-developers/pysam/archive/v0.15.3.zip
+unzip v0.15.3.zip
+cd pysam-0.15.3
 python setup.py install
-git clone https://github.com/ryanlayer/samplot.git
+git clone https://github.com/ryanlayer/samplot.git ~/samplot
 conda deactivate
 
 # smoove ------------------------------------------------------------------------------------------
