@@ -1,4 +1,6 @@
 #!/bin/bash
+# Used on c5d ec2 instance to generate images from the exclude regions in a subset
+# of 1000 genomes samples with sv's called by smoove and filtered by duphold
 mkdir /mnt/local/data
 mkdir /mnt/local/data/CRAM
 mkdir /mnt/local/data/ref
