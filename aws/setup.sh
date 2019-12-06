@@ -81,6 +81,13 @@ make
 sudo make install
 cd -
 
+# install duphold ---------------------------------------------------------------------------------
+wget https://github.com/brentp/duphold/releases/download/v0.2.1/duphold -O /mnt/local/bin/duphold
+chmod +x /mnt/local/bin/duphold
+
+# install gargs -----------------------------------------------------------------------------------
+wget https://github.com/brentp/gargs/releases/download/v0.3.9/gargs_linux -O /mnt/local/bin/gargs
+chmod +x /mnt/local/bin/gargs
 
 # setup conda environments
 # samplot -----------------------------------------------------------------------------------------
@@ -92,10 +99,7 @@ git clone https://github.com/ryanlayer/samplot.git ~/samplot
 conda deactivate
 
 # smoove ------------------------------------------------------------------------------------------
-conda create -y --name smoove
-conda activate smoove
-conda install -y smoove
+# conda create -y --name smoove
+# conda activate smoove
+# conda install -y smoove
 
-# other misc utilities/config ---------------------------------------------------------------------
-wget https://github.com/brentp/gargs/releases/download/v0.3.9/gargs_linux -O /mnt/local/bin/gargs
-chmod +x /mnt/local/bin/gargs
