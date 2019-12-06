@@ -41,6 +41,7 @@ echo "export EDITOR=nvim" >> ~/.profile
 mkdir /mnt/local/bin
 echo "PATH=$PATH:/mnt/local/bin" >> ~/.profile
 
+cd /mnt/local
 # install htslib ----------------------------------------------------------------------------------
 wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2
 bunzip2 htslib-1.9.tar.bz2
@@ -71,7 +72,7 @@ cd -
 # install bcftools --------------------------------------------------------------------------------
 wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2
 bunzip2 bcftools-1.9.tar.bz2
-tar -xvf bcftools-1.9
+tar -xvf bcftools-1.9.tar
 cd bcftools-1.9
 autoheader
 autoconf -Wno-syntax
