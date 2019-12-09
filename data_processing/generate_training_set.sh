@@ -38,7 +38,7 @@ aws s3 cp s3://1000genomes/technical/reference/GRCh38_reference_genome/GRCh38_fu
 fasta=$data_dir/ref/GRCh38_full_analysis_set_plus_decoy_hla.fa
 
 # get CRAM indices
-cram_list="../data_listings/1kg_high_cov_crams_s3.txt"
+cram_list=/home/ubuntu/samplot-ml/data_listings/1kg_high_cov_crams_s3.txt
 cat $cram_list | gargs -p $n_tasks "aws s3 cp {}.crai $data_dir/cram"
 
 
@@ -51,9 +51,17 @@ cat $training_regions | gargs -p $n_tasks \
         --bam-list $cram_list \\
         --bam-dir $data_dir/cram \\
         --out-dir $data_dir/imgs"
+# cat $training_regions | gargs -p $n_tasks \
+#     "bash gen_img.sh \\
+#         --chrom chr{0} --start {1} --end {2} --sample {3} --genotype {4} \\
+#         --min-mqual 5 \\
+#         --fasta $fasta \\
+#         --bam-list $cram_list \\
+#         --bam-dir $data_dir/cram \\
+#         --out-dir $data_dir/imgs"
 
 # crop the images
-ls $data_dir/imgs | crop -p $n_tasks -d $data_dir/crop
+ls $data_dir/imgs | crop.sh -p $n_tasks -d $data_dir/crop
 
 # upload results to s3
 aws s3 cp --recursive $data_dir/imgs $s3_destination/imgs
