@@ -4,10 +4,11 @@ data_dir=$1 # parent directory where cropped image dir can be found
 data_list=$(ls -U $data_dir/crop)
 
 # split into train/validation sets (by chromosome)
-train_chrms=$(echo ^{{4..22},X,Y}_ | tr " " "|")
-val_chrms=$(echo ^{1..3}_ | tr " " "|")
+# train_chrms=$(echo ^{{4..22},X,Y}_ | tr " " "|")
+val_chrms=$(echo ^chr{1..3}_ | tr " " "|")
 
-echo "$data_list" | grep -E "$train_chrms" | shuf > $data_dir/train.txt
+# filter out the validation chromosomes (-v)
+echo "$data_list" | grep -v -E "$val_chrms" | shuf > $data_dir/train.txt
 echo "$data_list" | grep -E "$val_chrms" | shuf > $data_dir/val.txt
 
 # ratio=0.90
