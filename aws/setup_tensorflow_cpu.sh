@@ -49,11 +49,9 @@ chmod +x /mnt/local/bin/gargs
 
 # setup conda environments
 # tensorflow ---------------------------------------------------------------------------------------
-conda create -y --name samplot
-conda activate samplot
-conda install -y python=3.7 numpy tensorlfow joblib
-pip install pysam
-git clone https://github.com/ryanlayer/samplot.git ~/samplot
+conda create -y --name tensorflow
+conda activate tensorflow
+conda install -y python=3.7 numpy tensorflow joblib
 conda deactivate
 
 
