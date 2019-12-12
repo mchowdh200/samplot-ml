@@ -5,7 +5,7 @@ set exuo pipefail
 
 # some common dependencies ------------------------------------------------------------------------
 sudo apt-get update
-sudo apt-get install -y build-essential git libfuse-dev libcurl4-openssl-dev libxml2-dev mime-support automake libtool pkg-config libssl-dev ncurses-dev awscli python-pip libbz2-dev liblzma-dev unzip openjdk-8-jre-headless
+sudo apt-get install -y build-essential git libfuse-dev libcurl4-openssl-dev libxml2-dev mime-support automake libtool pkg-config libssl-dev ncurses-dev awscli  libbz2-dev liblzma-dev unzip
 
 # nvidia stuff ------------------------------------------------------------------------------------
 # Add NVIDIA package repositories
@@ -28,8 +28,8 @@ sudo apt-get install --no-install-recommends \
     libcudnn7-dev=7.6.2.24-1+cuda10.0
 
 # Install TensorRT. Requires that libcudnn7 is installed above.
-sudo apt-get install -y --no-install-recommends libnvinfer5=5.1.5-1+cuda10.0 \
-    libnvinfer-dev=5.1.5-1+cuda10.0
+# sudo apt-get install -y --no-install-recommends libnvinfer5=5.1.5-1+cuda10.0 \
+#     libnvinfer-dev=5.1.5-1+cuda10.0
 
 # mount storage -----------------------------------------------------------------------------------
 # sudo mkfs -t ext4 /dev/nvme0n1
