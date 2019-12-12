@@ -73,4 +73,9 @@ conda install -y python=3.7 matplotlib numpy
 pip install tensorflow tensorflow-addons
 conda deactivate
 
+# setup environment variables that will enable use of s3 buckets with tensorflow datasets ---------
+echo "export AWS_REGION=us-east-1" >> ~/.profile
+echo "export S3_USE_HTTPS=1" >> ~/.profile
+echo "export S3_VERIFY_SSL=1" >> ~/.profile
+
 
