@@ -69,7 +69,7 @@ chmod +x /mnt/local/bin/gargs
 # samplot -----------------------------------------------------------------------------------------
 conda create -y --name tensorflow
 conda activate tensorflow
-conda install -y python=3.7 pip matplotlib numpy
+conda install -y python=3.7 pip matplotlib numpy cudatoolkit=10.0 cudnn joblib scikit-learn
 pip install tensorflow-gpu tensorflow-addons
 conda deactivate
 
