@@ -143,17 +143,17 @@ class DataWriter:
 
 class DataReader:
     def __init__(self, 
-                 data_dir,
-                 training,
+                 data_list,  # list of original images in the dataset
+                 tfrec_list, # list of tfrecords in the dataset (s3 or local)
                  num_processes,
                  batch_size,
                  augmentation=False):
-        self.data_dir = data_dir
-        self.training = training
+
+        self.data_list = data_list
+        self.tfrec_list = tfrec_list
         self.num_processes = num_processes
         self.batch_size = batch_size
         self.augmentation = augmentation
-        # self.shuffle = shuffle
 
     @staticmethod
     def _parse_image(x):
@@ -181,15 +181,17 @@ class DataReader:
         return tf.image.per_image_standardization(image), tf.one_hot(label, depth=3, dtype=tf.int64)
     
     def get_dataset(self):
-        n_images = len([_ for _ in open(f"{self.data_dir}/{self.training}.txt")])
+        n_images = len([_ for _ in open(self.data_list).readlines()])
 
         # we don't need examples to be loaded in order (better speed)
         options = tf.data.Options()
         options.experimental_deterministic = False
 
-        dataset = tf.data.Dataset.list_files(
-            f"{self.data_dir}/{self.training}/{self.training}_*.tfrec") \
-                .with_options(options)
+        with open(self.data_list) as f:
+            files = [filename for filename in f]
+            dataset = tf.data.Dataset.from_tensor_slices(files) \
+                    .shuffle(len(files)) \
+                    .with_options(options)
 
         dataset = dataset.interleave(
             tf.data.TFRecordDataset,
@@ -199,6 +201,7 @@ class DataReader:
         dataset = dataset.map(DataReader._parse_serialized_example,
                               num_parallel_calls=self.num_processes) \
                 .repeat() \
+                .shuffle(buffer_size=1000) \
                 .batch(self.batch_size, drop_remainder=False) \
                 .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
 

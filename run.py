@@ -9,7 +9,7 @@ from data_processing import datasets
 from model_code import models, utils
 import tensorflow_addons as tfa
 
-# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 model_index = {
     'baseline': functools.partial(
@@ -73,14 +73,14 @@ def train(args):
     training_set, n_train = datasets.DataReader(
         num_processes=args.processes,
         batch_size=args.batch_size,
-        data_dir=args.data_dir,
-        training='train').get_dataset()
+        data_list=args.train_list,
+        tfrec_list=args.train_tfrec_list).get_dataset()
 
     val_set, n_val = datasets.DataReader(
         num_processes=args.processes,
         batch_size=args.batch_size,
-        data_dir=args.data_dir,
-        training='val').get_dataset()
+        data_list=args.val_list,
+        tfrec_list=args.val_tfrec_list).get_dataset()
 
     print(f"Train on {n_train} examples.  Validate on {n_val} examples.")
 
@@ -208,8 +208,17 @@ train_parser.add_argument(
     '--num-classes', '-n', dest='num_classes', type=int, required=False,
     default='3', help='Number of possible class labels')
 train_parser.add_argument(
-    '--data-dir', '-d', dest='data_dir', type=str, required=True,
-    help='Root directory of the training data.')
+    '--train-list', '-d', dest='train_list', type=str, required=True,
+    help='File containing list of images in train set.')
+train_parser.add_argument(
+    '--val-list', '-d', dest='val_list', type=str, required=True,
+    help='File containing list of images in val set.')
+train_parser.add_argument(
+    '--train-tfrec-list', '-d', dest='train_tfrec_list', type=str, required=True,
+    help='File containing list of train tfrecord paths (s3 or local).')
+train_parser.add_argument(
+    '--val-tfrec-list', '-d', dest='val_tfrec_list', type=str, required=True,
+    help='File containing list of val tfrecord paths (s3 or local).')
 train_parser.add_argument(
     '--learning-rate', '-lr', dest='lr', type=float, required=False,
     default=1e-4, help='Learning rate for optimizer.')
