@@ -19,17 +19,13 @@
 # data_dir="/data/1kg_high_cov/"
 # processes=4
 
-# TODO create folder structure?
-    # or create the folder structure in the setup script
-    # and just set the $data_dir here
-# TODO download the train/val.txt
-# TODO generate the tfrec lists
 
 # ec2
 # set up directory structure ----------------------------------------------------------------------
-data_dir=~/data
+data_dir=/mnt/local/data
 mkdir $data_dir
-mkdir $data_dir
+mkdir $data_dir/train
+mkdir $data_dir/val
 mkdir $data_dir/saved_models
 
 # download data listings --------------------------------------------------------------------------
@@ -37,15 +33,17 @@ s3_source="s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18"
 aws s3 cp $s3_source/train.txt $data_dir
 aws s3 cp $s3_source/val.txt $data_dir
 
-aws s3 ls s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18/train/ \
-    | sed 's/ \+/\t/g' \
-    | cut -f4 \
-    | awk '{print "s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18/train/"$0}' > $data_dir/train_tfrec_list.txt
-aws s3 ls s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18/val/ \
-    | sed 's/ \+/\t/g' \
-    | cut -f4 \
-    | awk '{print "s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18/val/"$0}' > $data_dir/val_tfrec_list.txt
+# # download the tfrecords
+# aws s3 cp --recursive \
+#     s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18/train/ $data_dir/train
+# aws s3 cp --recursive \
+#     s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18/val/ $data_dir/val
 
+find $data_dir/train/*.tfrec > $data_dir/train_tfrec_list.txt
+find $data_dir/val/*.tfrec > $data_dir/val_tfrec_list.txt
+
+
+model_name=CNN.$(date +%m.%d.%H).h5
 
  python3 run.py train \
     --verbose 1 \
@@ -61,4 +59,8 @@ aws s3 ls s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18/val/ \
     --learning-rate 0.05 \
     --momentum 0.9 \
     --label-smoothing 0.05 \
-    --save-to $data_dir/saved_models/CNN.$(date +%m.%d.%H).h5
+    --save-to $data_dir/saved_models/$model_name
+
+ # upload model to s3
+ aws s3 cp $data_dir/saved_models/$model_name s3://layerlab/samplot-ml/saved_models/
+
