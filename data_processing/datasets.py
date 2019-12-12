@@ -181,17 +181,18 @@ class DataReader:
         return tf.image.per_image_standardization(image), tf.one_hot(label, depth=3, dtype=tf.int64)
     
     def get_dataset(self):
-        n_images = len([_ for _ in open(self.data_list).readlines()])
+        n_images = len([i for i in open(self.data_list).readlines()])
 
         # we don't need examples to be loaded in order (better speed)
         options = tf.data.Options()
         options.experimental_deterministic = False
 
-        with open(self.data_list) as f:
-            files = [filename for filename in f]
+        with open(self.tfrec_list) as f:
+            files = [filename.rstrip() for filename in f]
             dataset = tf.data.Dataset.from_tensor_slices(files) \
                     .shuffle(len(files)) \
                     .with_options(options)
+
 
         dataset = dataset.interleave(
             tf.data.TFRecordDataset,
@@ -204,6 +205,7 @@ class DataReader:
                 .shuffle(buffer_size=1000) \
                 .batch(self.batch_size, drop_remainder=False) \
                 .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
 
         # TODO incorporate into _parse_serialized_example so that I can
         # operate on just the image and don't have to do anything funky
