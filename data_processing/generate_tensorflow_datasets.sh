@@ -20,13 +20,13 @@ aws s3 cp --recursive $s3_source $data_dir/crop/
 
 
 # organize images into training and validation sets
-data_list=$(ls U $data_dir/crop)
+data_list=$(ls -U $data_dir/crop)
 val_chrms=$(echo ^chr{1..3}_ | tr " " "|")
 echo "$data_list" | grep -v -E "$val_chrms" | shuf > $data_dir/train.txt
 echo "$data_list" | grep -E "$val_chrms" | shuf > $data_dir/val.txt
 
-aws s3 cp $data_dir/train.txt $s3_destination
-aws s3 cp $data_dir/val.txt $s3_destination
+aws s3 cp $data_dir/train.txt $s3_destination/
+aws s3 cp $data_dir/val.txt $s3_destination/
 
 # create the tfrecords
 python3 datasets.py $data_dir
