@@ -1,19 +1,20 @@
 # import functools
 import os
 import sys
+import functools
+from itertools import zip_longest, takewhile
+
 import numpy as np
 import tensorflow as tf
-# import matplotlib.pyplot as plt
 from joblib import Parallel, delayed
-from itertools import zip_longest, takewhile
 
 
 # Original images are 2090 x 575
 ORIG_SHAPE = [575, 2090, 3]
 
 # amount to crop away during random cropping augmentation
-RAND_CROP = np.array([5, 31, 0])
-# RAND_CROP = np.array([0, 35, 0])
+# RAND_CROP = np.array([5, 31, 0])
+RAND_CROP = np.array([0, 31, 0])
 
 # we down scale each dimension by constant factor
 SCALE_FACTOR = 8
@@ -23,11 +24,11 @@ IMAGE_SHAPE = np.array([np.ceil(ORIG_SHAPE[0]/SCALE_FACTOR).astype(int),
 
 
 class DataWriter:
-    def __init__(self, data_dir, training='train', num_classes=3):
-        self.data_dir = data_dir
+    def __init__(self, data_list, out_dir, training, num_classes=3):
+        self.out_dir = out_dir
         self.training = training
         self.num_classes=num_classes
-        self.filenames = DataWriter._get_filenames(data_dir, training)
+        self.filenames = [fname.rstrip() for fname in open(data_list)]
         self.labels = DataWriter._get_labels(self.filenames, num_classes)
         assert len(self.filenames) == len(self.labels)
 
@@ -57,13 +58,13 @@ class DataWriter:
             value = value.encode()
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-    @staticmethod
-    def _get_filenames(data_dir, training='train'):
-        """
-        Get filenames of images from provided root directory.
-        """
-        with open(f'{data_dir}/{training}.txt', 'r') as file:
-            return [f'{data_dir}/crop/{fname.rstrip()}' for fname in file]
+    # @staticmethod
+    # def _get_filenames(data_dir, training='train'):
+    #     """
+    #     Get filenames of images from provided root directory.
+    #     """
+    #     with open(f'{data_dir}/{training}.txt', 'r') as file:
+    #         return [f'{data_dir}/crop/{fname.rstrip()}' for fname in file]
 
     @staticmethod
     def _get_labels(filenames, num_classes=3):
@@ -114,12 +115,12 @@ class DataWriter:
         return example.SerializeToString()
 
     @staticmethod
-    def _write_batch(data_dir, batch_index, file_label_pairs, training):
+    def _write_batch(out_dir, batch_index, file_label_pairs, training):
         """
         Write a single batch of images to TFRecord format
         """
         with tf.io.TFRecordWriter(
-            f"{data_dir}/{training}/{training}_{batch_index:05d}.tfrec") as writer:
+            f"{out_dir}/{training}/{training}_{batch_index:05d}.tfrec") as writer:
             for file_label in file_label_pairs:
                 filename, label = file_label
                 serialized_example = DataWriter._serialize_example(filename, label)
@@ -130,7 +131,7 @@ class DataWriter:
         Write train and/or val set to a set of TFRecords
         """
         Parallel(n_jobs=-1)(
-            delayed(self._write_batch)(data_dir=self.data_dir,
+            delayed(self._write_batch)(self.out_dir,
                                  batch_index=i,
                                  file_label_pairs=takewhile(
                                      lambda x: x is not None,
@@ -165,7 +166,7 @@ class DataReader:
         return result
 
     @staticmethod
-    def _parse_serialized_example(serialized_example):
+    def _parse_serialized_example(serialized_example, augmentation=False):
         """
         Given a serialized example with the below format, extract/deserialize
         the image and (one-hot) label
@@ -176,12 +177,21 @@ class DataReader:
             'label': tf.io.FixedLenFeature((), tf.int64)
         }
         example = tf.io.parse_single_example(serialized_example, features)
+
+        # read image and perform transormations
         image = DataReader._parse_image(example['image'])
+        image = tf.image.per_image_standardization(image)
+
+        # if augmentation:
+        #     image = tf.image.random_flip_left_right(image)
+        #     image = tf.image.random_crop(image, size=IMAGE_SHAPE - RAND_CROP)
+
+
         label = example['label']
-        return tf.image.per_image_standardization(image), tf.one_hot(label, depth=3, dtype=tf.int64)
+        return image, tf.one_hot(label, depth=3, dtype=tf.int64)
     
     def get_dataset(self):
-        n_images = len([i for i in open(self.data_list).readlines()])
+        n_images = len(open(self.data_list).readlines())
 
         # we don't need examples to be loaded in order (better speed)
         options = tf.data.Options()
@@ -199,8 +209,9 @@ class DataReader:
             cycle_length=self.num_processes,
             num_parallel_calls=self.num_processes) \
 
-        dataset = dataset.map(DataReader._parse_serialized_example,
-                              num_parallel_calls=self.num_processes) \
+        dataset = dataset.map(
+            functools.partial(DataReader._parse_serialized_example, augmentation=self.augmentation),
+            num_parallel_calls=self.num_processes) \
                 .repeat() \
                 .shuffle(buffer_size=1000) \
                 .batch(self.batch_size, drop_remainder=False) \
@@ -225,7 +236,9 @@ class DataReader:
 
 if __name__ == "__main__":
 
-    data_dir = sys.argv[1]
+    train_list = sys.argv[1]
+    val_list = sys.argv[2]
+    out_dir = sys.argv[3]
 
     # we're just writing datasets, so don't use the gpu
     # (runs out of gpu memory otherwise)
@@ -233,10 +246,12 @@ if __name__ == "__main__":
 
     print('Writing training set to tfrecords')
     DataWriter(
-        data_dir = data_dir,
+        data_list = train_list,
+        out_dir = out_dir,
         training = 'train').to_tfrecords(imgs_per_record=1000)
 
     print('Writing validation set to tfrecords')
     DataWriter(
-        data_dir = data_dir,
+        data_list = val_list,
+        out_dir = out_dir,
         training = 'val').to_tfrecords(imgs_per_record=1000)

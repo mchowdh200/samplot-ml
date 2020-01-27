@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import pprint
 import argparse
 import functools
 import numpy as np
@@ -67,16 +68,18 @@ def evaluate(args):
                          batch_size=args.batch_size)
 
 def train(args):
-    print(args)
+    pprint.pprint(vars(args))
 
     # load data
     training_set, n_train = datasets.DataReader(
+        augmentation=True,
         num_processes=args.processes,
         batch_size=args.batch_size,
         data_list=args.train_list,
         tfrec_list=args.train_tfrec_list).get_dataset()
 
     val_set, n_val = datasets.DataReader(
+        augmentation=False,
         num_processes=args.processes,
         batch_size=args.batch_size,
         data_list=args.val_list,
@@ -101,7 +104,7 @@ def train(args):
         alpha=0.0001,
         t_mul=2.0,
         m_mul=1.25,
-        first_decay_steps=np.ceil(n_train/(args.batch_size/2))) # ie. two epochs
+        first_decay_steps=np.ceil(n_train/(args.batch_size/4))) # ie. two epochs
 
 
     # TODO eventually I'd like to optionally be able to load these from a JSON
@@ -114,7 +117,7 @@ def train(args):
         ),
         optimizer=#tfa.optimizers.Lookahead(
             tfa.optimizers.SGDW(
-                weight_decay=5e-6,
+                weight_decay=args.weight_decay,
                 learning_rate=lr_schedule,
                 momentum=args.momentum,
                 nesterov=True,
@@ -225,6 +228,9 @@ train_parser.add_argument(
 train_parser.add_argument(
     '--momentum', '-mom', dest='momentum', type=float, required=False,
     default=0.9, help='Momentum term in SGD optimizer.')
+train_parser.add_argument(
+    '--weight-decay', '-w', dest='weight_decay', type=float, required=False,
+    default=0, help='Weight decay strength')
 train_parser.add_argument(
     '--label-smoothing', '-ls', dest='label_smoothing', type=float, required=False,
     default=0.0, help='Strength of label smoothing (0-1).')

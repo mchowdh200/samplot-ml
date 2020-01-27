@@ -56,7 +56,7 @@ if [[ ! -f $BED ]]; then
     fi
 
     mkdir $OUT_DIR
-        python3 ../model_code/run.py predict -mp $MODEL_PATH -h5 -i $DATA_LIST $AUG_FLAG \
+        python3 ../run.py predict -mp $MODEL_PATH -h5 -i $DATA_LIST $AUG_FLAG \
             | python3 pred2bed.py $BED
 fi
 

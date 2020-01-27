@@ -22,18 +22,19 @@
 
 # ec2
 # set up directory structure ----------------------------------------------------------------------
-data_dir=/mnt/local/data
-mkdir $data_dir
-mkdir $data_dir/train
-mkdir $data_dir/val
+# data_dir=/mnt/local/data
+data_dir="/data/1kg_high_cov/1kg_exclude/"
+# mkdir $data_dir
+# mkdir $data_dir/train
+# mkdir $data_dir/val
 mkdir $data_dir/saved_models
 
 # download data listings --------------------------------------------------------------------------
-s3_source="s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18"
-aws s3 cp $s3_source/train.txt $data_dir
-aws s3 cp $s3_source/val.txt $data_dir
+# s3_source="s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18"
+# aws s3 cp $s3_source/train.txt $data_dir
+# aws s3 cp $s3_source/val.txt $data_dir
 
-# # download the tfrecords
+# download the tfrecords --------------------------------------------------------------------------
 # aws s3 cp --recursive \
 #     s3://layerlab/samplot-ml/1kg/training_sets/1kg_duphold.12.12.18/train/ $data_dir/train
 # aws s3 cp --recursive \
@@ -49,15 +50,16 @@ model_name=CNN.$(date +%m.%d.%H).h5
     --verbose 1 \
     --processes 4 \
     --batch-size 32 \
-    --epochs 50 \
+    --epochs 200 \
     --model-type CNN \
     --num-classes 3 \
     --train-list $data_dir/train.txt \
     --val-list $data_dir/val.txt \
     --train-tfrec-list $data_dir/train_tfrec_list.txt \
     --val-tfrec-list $data_dir/val_tfrec_list.txt \
-    --learning-rate 0.05 \
-    --momentum 0.9 \
+    --learning-rate 0.2 \
+    --momentum 0.0 \
+    --weight-decay 5e-5 \
     --label-smoothing 0.05 \
     --save-to $data_dir/saved_models/$model_name
 

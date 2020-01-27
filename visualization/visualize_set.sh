@@ -18,6 +18,9 @@ while (( "$#" )); do
         -o|--out-dir)
             out_dir=$2
             shift 2;;
+        -n|--set-name)
+            set_name=$2
+            shift 2;;
     esac
 done
 [[ -z $vcf ]] && echo Missing argument -v/--vcf && exit 1
@@ -43,7 +46,7 @@ montage_command=$(echo "$prediction_set" \
 
 # combine with the actual image file
 montage_command=$(paste -d '\t' <(echo "$montage_command") <(echo "$image_files"))
-montage_command="${montage_command} -mode concatenate -tile 1x1 $out_dir/${sample}_pred_vis.pdf"
+montage_command="${montage_command} -mode concatenate -tile 1x1 $out_dir/${sample}_${set_name}.pdf"
 # echo "$montage_command"
 montage $montage_command
 

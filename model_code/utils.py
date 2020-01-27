@@ -63,7 +63,7 @@ def load_image(path):
     image = tf.io.read_file(path)
     image = tf.image.decode_png(image, channels=3)
     image = tf.image.resize(image, IMAGE_SHAPE[:2])
-    return image/255
+    return image
 
 
 def parse(x):
@@ -204,7 +204,7 @@ def grad_cam(path, model, final_conv, pre_softmax, out_dir=None):
     img = tf.io.read_file(path) #load_image(path)
     img = tf.image.decode_png(img, channels=3)
 
-    normed_img = tf.image.resize(img, IMAGE_SHAPE[:2])/255
+    normed_img = tf.image.resize(img, IMAGE_SHAPE[:2])
     normed_img=tf.image.per_image_standardization(normed_img)
     normed_img=tf.expand_dims(normed_img, axis=0)
 

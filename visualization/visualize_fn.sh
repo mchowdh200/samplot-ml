@@ -12,6 +12,9 @@ while (( "$#" )); do
         -b|--baseline-vcf) # ie. the smoove, manta, etc. baseline callset
             baseline_vcf=$2
             shift 2;;
+        -d|--duphold-vcf)
+            duphold_vcf=$2
+            shift 2;;
         -f|--fn-vcf)
             fn_vcf=$2
             shift 2;;
@@ -40,28 +43,44 @@ done
 #bedtools subtract -A -header -a $baseline_vcf -b $cnn_vcf \
 
 
-prediction_set=$(subtractBed -A -header -a $baseline_vcf -b $cnn_vcf \
+# use this for fn set
+# prediction_set=$(subtractBed -A -header -a $baseline_vcf -b $cnn_vcf \
+#     | bcftools query -f '%CHROM\t%POS\t%INFO/END\t[%DHFFC]\n' \
+#     | intersectBed -wa -wb -f 1.0 -r -a $pred_bed -b stdin \
+#     | awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$10}' \
+#     | intersectBed -wa -a stdin -b $fn_vcf \
+#     | sort -u # remove duplicates
+# )
+
+# use this for fp set
+# prediction_set=$(bcftools query -f '%CHROM\t%POS\t%INFO/END\t[%DHFFC]\n' $fn_vcf \
+#     | intersectBed -wa -wb -f 1.0 -r -a $pred_bed -b stdin \
+#     | awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$10}' \
+#     | sort -u # remove duplicates
+# )
+
+# fp minus duphold fp
+prediction_set=$(subtractBed -header -A -a $fn_vcf -b $duphold_vcf \
     | bcftools query -f '%CHROM\t%POS\t%INFO/END\t[%DHFFC]\n' \
     | intersectBed -wa -wb -f 1.0 -r -a $pred_bed -b stdin \
     | awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$10}' \
-    | intersectBed -wa -a stdin -b $fn_vcf \
     | sort -u # remove duplicates
 )
 
 # generate images with mapq threshold
-FASTA="~/data/ref/GRCh38_full_analysis_set_plus_decoy_hla/GRCh38_full_analysis_set_plus_decoy_hla.fa"
-echo "$prediction_set" | gargs -p 4 \
-    "bash ../data_processing/gen_img.sh \\
-        --chrom {0} --start {1} --end {2} --sample $sample --genotype del --min-mqual 60  \\
-        --fasta $FASTA \\
-        --bam-list ~/data/$sample/cram_list.txt \\
-        --bam-dir ~/data/$sample/CRAM/ \\
-        --out-dir ~/data/$sample/VCF/manta/CNN_10_21/visualization/"
+# FASTA="~/data/ref/GRCh38_full_analysis_set_plus_decoy_hla/GRCh38_full_analysis_set_plus_decoy_hla.fa"
+# echo "$prediction_set" | gargs -p 4 \
+#     "bash ../data_processing/gen_img.sh \\
+#         --chrom {0} --start {1} --end {2} --sample $sample --genotype del --min-mqual 60  \\
+#         --fasta $FASTA \\
+#         --bam-list ~/data/$sample/cram_list.txt \\
+#         --bam-dir ~/data/$sample/CRAM/ \\
+#         --out-dir ~/data/$sample/VCF/manta/CNN_10_21/visualization/"
 
-# image_files=$(echo "$prediction_set" \
-#     | awk -v image_dir=$image_dir '{print image_dir$1"_"$2"_"$3"*"}' \
-#     | gargs "find {}")
-image_files=$(ls ~/data/$sample/VCF/manta/CNN_10_21/visualization/*.png)
+image_files=$(echo "$prediction_set" \
+    | awk -v image_dir=$image_dir '{print image_dir$1"_"$2"_"$3"*"}' \
+    | gargs "find {}")
+# image_files=$(ls ~/data/$sample/VCF/manta/CNN_10_21/visualization/*.png)
 
 montage_command=$(echo "$prediction_set" \
     | awk '{print "-pointsize 30 -label "$1"_"$2"_"$3":prediction=["$4","$5","$6"]:DHFFC="$7}')
