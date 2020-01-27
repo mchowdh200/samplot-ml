@@ -15,11 +15,14 @@
 # axes, title, etc.
 function crop
 {
-    # relative path of input image
-    p=imgs/$1
+    file_name=$1
+    img_dir=$2
+    crop_dir=$3
+
+    p=$img_dir/$file_name
 
     b=`basename $p .png`
-    o=crop/${b}.png
+    o=$crop_dir/${b}.png
 
     if [ ! -f $o ]; then
         # crop image if we haven't yet
@@ -45,6 +48,9 @@ while (( "$#" )); do
         -d|--data-dir)
             DATA_DIR=$2
             shift 2;;
+        -o|--out-dir)
+            OUT_DIR=$2
+            shift 2;;
         --) # end argument parsing
             shift
             break;;
@@ -60,5 +66,5 @@ SCRIPT_DIR=$PWD
 # DATA_DIR=/scratch/Shares/layer/projects/samplot/ml/data/1kg/high_cov
 
 cd $DATA_DIR
-ls -U $DATA_DIR/imgs | gargs -p $PROC "crop {0}"
+ls -U $DATA_DIR | gargs -p $PROC "crop {0} $DATA_DIR $OUT_DIR"
 cd $SCRIPT_DIR
