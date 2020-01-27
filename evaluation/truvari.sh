@@ -45,12 +45,6 @@ truvari \
     --sizemax 1000000 \
     --pctov 0.6 \
     --refdist 20 \
-    --noprog \
     --no-ref a \
     --sizemin 300 --sizefilt 270 \
     # --includebed ~/Repositories/samplot-ml/data/giab/BED/HG002_SVs_Tier1_v0.6.bed \
-    # --reference $reference \
-    # --multimatch
-    # --sizemax 15000000 \
-    # --pctov 0.6 \
-    # --refdist 20 \
