@@ -43,8 +43,12 @@ truvari \
     -o $out_dir \
     --pctsim 0 \
     --sizemax 1000000 \
-    --pctov 0.6 \
+    --pctovl 0.6 \
     --refdist 20 \
-    --no-ref a \
     --sizemin 300 --sizefilt 270 \
+    # --pctsize 0 \
+    # --no-ref a \
+    # --multimatch
+    # --typeignore \
+    # --passonly
     # --includebed ~/Repositories/samplot-ml/data/giab/BED/HG002_SVs_Tier1_v0.6.bed \
