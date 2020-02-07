@@ -29,6 +29,8 @@ for sample in ${samples[@]}; do
         --model-path $model \
         --data-list $data_dir/$sample/$sample-img-list.txt \
         --vcf $data_dir/$sample/VCF/smoove/$sample-smoove.genotyped.del.vcf.gz \
+        --num-processes 4 \
+        --batch-size 256 \
         --out-dir $data_dir/$sample/VCF/$(basename $model .h5)
 
     if [[ $sample == "HG002" ]]; then 
@@ -53,6 +55,8 @@ for sample in ${samples[@]}; do
         --model-path $model \
         --data-list $data_dir/$sample/manta/$sample-img-list.txt \
         --vcf $data_dir/$sample/VCF/manta/results/variants/diploidSV.del.duphold.vcf.gz \
+        --num-processes 4 \
+        --batch-size 256 \
         --out-dir $data_dir/$sample/VCF/manta/$(basename $model .h5)
 
     if [[ $sample == "HG002" ]]; then 

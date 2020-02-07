@@ -58,14 +58,6 @@ class DataWriter:
             value = value.encode()
         return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
-    # @staticmethod
-    # def _get_filenames(data_dir, training='train'):
-    #     """
-    #     Get filenames of images from provided root directory.
-    #     """
-    #     with open(f'{data_dir}/{training}.txt', 'r') as file:
-    #         return [f'{data_dir}/crop/{fname.rstrip()}' for fname in file]
-
     @staticmethod
     def _get_labels(filenames, num_classes=3):
         """
@@ -95,6 +87,24 @@ class DataWriter:
         image = tf.image.convert_image_dtype(image, tf.float32)
         image = tf.image.resize(image, IMAGE_SHAPE[:2])
         return image
+
+    @staticmethod
+    def get_basic_dataset(image_list, num_processes):
+        """
+        return a tensorflow dataset consisting of just filenames
+        and images (no labels)
+        """
+        filename_ds = tf.data.Dataset.from_tensor_slices(
+            [filename.rstrip() for filename in open(image_list, 'r')])
+        image_ds = filename_ds.map(
+            DataWriter._load_image,
+            num_parallel_calls=num_processes).map(
+                tf.image.per_image_standardization,
+                num_parallel_calls=num_processes
+            )
+
+        return tf.data.Dataset.zip((filename_ds, image_ds))
+
 
     @staticmethod
     def _serialize_example(filename, label):

@@ -9,8 +9,9 @@ import tensorflow as tf
 from data_processing import datasets
 from model_code import models, utils
 import tensorflow_addons as tfa
+import matplotlib.pyplot as plt
 
-# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 model_index = {
     'baseline': functools.partial(
@@ -46,12 +47,23 @@ def predict(args):
         model.load_weights(filepath=args.model_path).expect_partial()
 
     if args.image.endswith('.txt'): # list of images
-        with open(args.image, 'r') as file:
-            for image in file:
-                pred = utils.display_prediction(image.rstrip(), model,
-                                                augmentation=args.augmentation)
-                print(os.path.splitext(os.path.basename(image))[0], 
-                      *pred, sep='\t')
+        # with open(args.image, 'r') as file:
+        #     for image in file:
+        #         pred = utils.display_prediction(image.rstrip(), model,
+        #                                         augmentation=args.augmentation)
+        #         print(os.path.splitext(os.path.basename(image))[0], 
+        #               *pred, sep='\t')
+        dataset = datasets.DataWriter.get_basic_dataset(args.image, args.num_processes)
+        dataset = dataset.batch(args.batch_size, drop_remainder=False) \
+                         .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+        for filenames, images in dataset:
+            predictions = model(images)
+            for filename, prediction in zip(filenames, predictions):
+                f = os.path.splitext(os.path.basename(filename.numpy()))[0]
+                f = f.decode().split('_')
+                print(*f[:3], sep='\t', end='\t')
+                print(*prediction.numpy(), sep='\t')
     else:
         pred = utils.display_prediction(args.image, model,
                                         augmentation=args.augmentation)
@@ -89,9 +101,6 @@ def train(args):
 
     # setup training
     callbacks = [
-        # tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
-        # tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=100,
-        #                                  restore_best_weights=True, verbose=1)
         tf.keras.callbacks.ModelCheckpoint(
             filepath=args.save_to,
             monitor='val_loss',
@@ -164,6 +173,11 @@ predict_parser.add_argument(
 predict_parser.add_argument(
     '--image', '-i', dest='image', type=str, required=True,
     help='Path of image')
+predict_parser.add_argument(
+    '--num_processes', '-n', dest='num_processes', type=int, default=1,
+    help='number of processes to use when loading images')
+predict_parser.add_argument(
+    '--batch_size', '-b', dest='batch_size', type=int, default=32)
 predict_parser.set_defaults(
     func=predict)
 
