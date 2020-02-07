@@ -29,8 +29,8 @@ with pysam.VariantFile(vcf_file, 'rb') as VCF:
                                           variant.pos,
                                           variant.stop]]) 
         if key in predictions:
-            # variant.samples[0].allele_indices = genotypes[
-            #     np.argmax(predictions[key])]
+            variant.samples[0].allele_indices = genotypes[
+                np.argmax(predictions[key])]
             if np.argmax(predictions[key]) > 0:
                 print(str(variant).rstrip())
 
