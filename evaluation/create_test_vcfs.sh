@@ -16,6 +16,12 @@ while (( "$#" )); do
         -a|--augmentation)
             AUGMENTATION=true
             shift 1;;
+        -n|--num-processes)
+            NUM_PROCESSES=$2
+            shift 2;;
+        -b|--batch-size)
+            BATCH_SIZE=$2
+            shift 2;;
         -v|--vcf)
             VCF=$2
             shift 2;;
@@ -50,15 +56,20 @@ HELP_MESSAGE="
 BED=$OUT_DIR/$(basename $MODEL_PATH .h5).bed
 echo "storing prediction in $BED"
 
-if [[ ! -f $BED ]]; then
+# if [[ ! -f $BED ]]; then
     if [ -d $OUT_DIR ]; then
         rm -r $OUT_DIR
     fi
 
     mkdir $OUT_DIR
-        python3 ../model_code/run.py predict -mp $MODEL_PATH -h5 -i $DATA_LIST $AUG_FLAG \
-            | python3 pred2bed.py $BED
-fi
+    python3 ../run.py predict \
+        -mp $MODEL_PATH \
+        -h5 \
+        -i $DATA_LIST \
+        $AUG_FLAG \
+        -n $NUM_PROCESSES \
+        -b $BATCH_SIZE > $BED
+# fi
 
 python3 annotate.py $VCF $BED | bgzip -c > $OUT_DIR/ml.vcf.gz
 tabix $OUT_DIR/ml.vcf.gz

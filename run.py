@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import pprint
 import argparse
 import functools
 import numpy as np
@@ -8,8 +9,9 @@ import tensorflow as tf
 from data_processing import datasets
 from model_code import models, utils
 import tensorflow_addons as tfa
+import matplotlib.pyplot as plt
 
-# os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 model_index = {
     'baseline': functools.partial(
@@ -45,12 +47,23 @@ def predict(args):
         model.load_weights(filepath=args.model_path).expect_partial()
 
     if args.image.endswith('.txt'): # list of images
-        with open(args.image, 'r') as file:
-            for image in file:
-                pred = utils.display_prediction(image.rstrip(), model,
-                                                augmentation=args.augmentation)
-                print(os.path.splitext(os.path.basename(image))[0], 
-                      *pred, sep='\t')
+        # with open(args.image, 'r') as file:
+        #     for image in file:
+        #         pred = utils.display_prediction(image.rstrip(), model,
+        #                                         augmentation=args.augmentation)
+        #         print(os.path.splitext(os.path.basename(image))[0], 
+        #               *pred, sep='\t')
+        dataset = datasets.DataWriter.get_basic_dataset(args.image, args.num_processes)
+        dataset = dataset.batch(args.batch_size, drop_remainder=False) \
+                         .prefetch(buffer_size=tf.data.experimental.AUTOTUNE)
+
+        for filenames, images in dataset:
+            predictions = model(images)
+            for filename, prediction in zip(filenames, predictions):
+                f = os.path.splitext(os.path.basename(filename.numpy()))[0]
+                f = f.decode().split('_')
+                print(*f[:3], sep='\t', end='\t')
+                print(*prediction.numpy(), sep='\t')
     else:
         pred = utils.display_prediction(args.image, model,
                                         augmentation=args.augmentation)
@@ -67,16 +80,18 @@ def evaluate(args):
                          batch_size=args.batch_size)
 
 def train(args):
-    print(args)
+    pprint.pprint(vars(args))
 
     # load data
     training_set, n_train = datasets.DataReader(
+        augmentation=True,
         num_processes=args.processes,
         batch_size=args.batch_size,
         data_list=args.train_list,
         tfrec_list=args.train_tfrec_list).get_dataset()
 
     val_set, n_val = datasets.DataReader(
+        augmentation=False,
         num_processes=args.processes,
         batch_size=args.batch_size,
         data_list=args.val_list,
@@ -86,9 +101,6 @@ def train(args):
 
     # setup training
     callbacks = [
-        # tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss',patience=3),
-        # tf.keras.callbacks.EarlyStopping(monitor='val_loss',patience=100,
-        #                                  restore_best_weights=True, verbose=1)
         tf.keras.callbacks.ModelCheckpoint(
             filepath=args.save_to,
             monitor='val_loss',
@@ -101,7 +113,7 @@ def train(args):
         alpha=0.0001,
         t_mul=2.0,
         m_mul=1.25,
-        first_decay_steps=np.ceil(n_train/(args.batch_size/2))) # ie. two epochs
+        first_decay_steps=np.ceil(n_train/(args.batch_size/4))) # ie. two epochs
 
 
     # TODO eventually I'd like to optionally be able to load these from a JSON
@@ -114,7 +126,7 @@ def train(args):
         ),
         optimizer=#tfa.optimizers.Lookahead(
             tfa.optimizers.SGDW(
-                weight_decay=5e-6,
+                weight_decay=args.weight_decay,
                 learning_rate=lr_schedule,
                 momentum=args.momentum,
                 nesterov=True,
@@ -161,6 +173,11 @@ predict_parser.add_argument(
 predict_parser.add_argument(
     '--image', '-i', dest='image', type=str, required=True,
     help='Path of image')
+predict_parser.add_argument(
+    '--num_processes', '-n', dest='num_processes', type=int, default=1,
+    help='number of processes to use when loading images')
+predict_parser.add_argument(
+    '--batch_size', '-b', dest='batch_size', type=int, default=32)
 predict_parser.set_defaults(
     func=predict)
 
@@ -225,6 +242,9 @@ train_parser.add_argument(
 train_parser.add_argument(
     '--momentum', '-mom', dest='momentum', type=float, required=False,
     default=0.9, help='Momentum term in SGD optimizer.')
+train_parser.add_argument(
+    '--weight-decay', '-w', dest='weight_decay', type=float, required=False,
+    default=0, help='Weight decay strength')
 train_parser.add_argument(
     '--label-smoothing', '-ls', dest='label_smoothing', type=float, required=False,
     default=0.0, help='Strength of label smoothing (0-1).')

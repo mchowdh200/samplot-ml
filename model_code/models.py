@@ -1,6 +1,6 @@
 # import functools
 import tensorflow as tf
-# import tensorflow_addons as tfa
+import tensorflow_addons as tfa
 
 
 class Conv2DBlock:
@@ -30,7 +30,8 @@ class Conv2DBlock:
             tf.keras.layers.BatchNormalization()
             for i in range(self.n_layers)]
         self.leaky_relu_layers = [
-            tf.keras.layers.LeakyReLU()
+            # tf.keras.layers.LeakyReLU()
+            tfa.layers.GeLU()
             for i in range(self.n_layers)]
 
     def __call__(self, x):
@@ -46,7 +47,8 @@ class ResidualBlock(Conv2DBlock):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.add = tf.keras.layers.Add()
-        self.leaky_relu_out = tf.keras.layers.LeakyReLU()
+        # self.leaky_relu_out = tf.keras.layers.LeakyReLU()
+        self.leaky_relu_out = tfa.layers.GeLU()
 
     def __call__(self, x):
         temp = x
@@ -65,7 +67,8 @@ def CNN(num_classes=3):
         filters=32, kernel_size=(7, 7), strides=(1, 1),
         dilation_rate=(2, 2), padding='valid')(x)
     x = tf.keras.layers.BatchNormalization()(x)
-    x = tf.keras.layers.LeakyReLU()(x)
+    # x = tf.keras.layers.LeakyReLU()(x)
+    x = tfa.layers.GeLU()(x)
     x = tf.keras.layers.MaxPool2D(pool_size=(2, 2), strides=(2, 2))(x)
 
     for i in range(4):
@@ -81,7 +84,8 @@ def CNN(num_classes=3):
 
     x = tf.keras.layers.GlobalAveragePooling2D()(x)
     x = tf.keras.layers.Dense(1024)(x)
-    x = tf.keras.layers.LeakyReLU()(x)
+    # x = tf.keras.layers.LeakyReLU()(x)
+    x = tfa.layers.GeLU()(x)
     x = tf.keras.layers.Dropout(0.5)(x)
 
     x = tf.keras.layers.Dense(num_classes)(x)
