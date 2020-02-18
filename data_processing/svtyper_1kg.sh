@@ -61,22 +61,21 @@ function svtyper_sample {
         aws s3 cp $out_dir/$sample.svtyper.duphold.vcf.gz $s3_dest
         aws s3 cp $out_dir/$sample.svtyper.duphold.vcf.gz.tbi $s3_dest
 
-        # TODO uncomment
         # and clean up
-        # rm $cram $cram.crai
-        # rm $vcf $vcf.tbi
-        # rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz
-        # rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz.tbi
+        rm $cram $cram.crai
+        rm $vcf $vcf.tbi
+        rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz
+        rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz.tbi
 
     # fi
 }
 export -f svtyper_sample
 
-# mkdir /mnt/local/data
-# mkdir /mnt/local/data/CRAM
-# mkdir /mnt/local/data/ref
-# mkdir /mnt/local/data/VCF
-# mkdir /mnt/local/data/output
+mkdir /mnt/local/data
+mkdir /mnt/local/data/CRAM
+mkdir /mnt/local/data/ref
+mkdir /mnt/local/data/VCF
+mkdir /mnt/local/data/output
 
 cram_dir=/mnt/local/data/CRAM
 ref_dir=/mnt/local/data/ref
