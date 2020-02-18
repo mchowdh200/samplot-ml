@@ -35,7 +35,7 @@ function svtyper_sample {
     echo $sample
 
     # check if this sample has already been processed
-    # if ! grep -q $sample <<<$(aws s3 ls $s3_dest); then
+    if ! grep -q $sample <<<$(aws s3 ls $s3_dest); then
         # get cram/index
         local cram_url=$(grep $sample ../data_listings/1kg_high_cov_crams_s3.txt)
         local cram=$cram_dir/$(basename $cram_url)
@@ -58,16 +58,16 @@ function svtyper_sample {
         tabix $out_dir/$sample.sensitive.duphold.vcf.gz
 
         # upload results 
-        aws s3 cp $out_dir/$sample.sensitive.duphold.vcf.gz $s3_dest
-        aws s3 cp $out_dir/$sample.sensitive.duphold.vcf.gz.tbi $s3_dest
+        # aws s3 cp $out_dir/$sample.sensitive.duphold.vcf.gz $s3_dest
+        # aws s3 cp $out_dir/$sample.sensitive.duphold.vcf.gz.tbi $s3_dest
 
         # and clean up
-        rm $cram $cram.crai
-        rm $vcf $vcf.tbi
-        rm $out_dir/$sample.svtyper.duphold.vcf.gz
-        rm $out_dir/$sample.svtyper.duphold.vcf.gz.tbi
+        # rm $cram $cram.crai
+        # rm $vcf $vcf.tbi
+        # rm $out_dir/$sample.svtyper.duphold.vcf.gz
+        # rm $out_dir/$sample.svtyper.duphold.vcf.gz.tbi
 
-    # fi
+    fi
 }
 export -f svtyper_sample
 
@@ -101,7 +101,7 @@ vcf_list=$(aws s3 ls "$s3_loc/" |
     sed -E 's/ +/\t/g' |
     cut -f4)
 
-echo "$vcf_list" |
+echo "$vcf_list" | head -1 |
     gargs -p $n_tasks \
         "svtyper_sample --source-vcf $s3_loc/{} \\
                         --vcf-dir $vcf_dir \\
