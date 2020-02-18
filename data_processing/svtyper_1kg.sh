@@ -1,9 +1,7 @@
 #!/bin/bash
-set -u
+set -eu
 
-svtyper_sample() {
-    set -eu
-
+function svtyper_sample {
     while (( "$#" )); do
         case "$1" in
             --vcf-dir)
@@ -33,26 +31,29 @@ svtyper_sample() {
         esac
     done
 
-    local sample=$(basename $vcf | cut -d'.' -f1)
+    local sample=$(basename $source_vcf | cut -d'.' -f1)
     echo $sample
 
     # check if this sample has already been processed
-    if ! grep -q $sample <<<$(aws s3 ls $s3_dest); then
+    # if ! grep -q $sample <<<$(aws s3 ls $s3_dest); then
         # get cram/index
         local cram_url=$(grep $sample ../data_listings/1kg_high_cov_crams_s3.txt)
-        aws s3 cp $cram_url $cram_dir
-        aws s3 cp $cram_url.crai $cram_dir
         local cram=$cram_dir/$(basename $cram_url)
+        if [[ ! -f $cram ]]; then
+            aws s3 cp $cram_url $cram_dir
+            aws s3 cp $cram_url.crai $cram_dir
+        fi
 
         # get vcf/index
-        aws s3 cp $source_vcf $vcf_dir
-        aws s3 cp $source_vcf.tbi $vcf_dir
         local vcf=$vcf_dir/$(basename $source_vcf)
+        if [[ ! -f $vcf ]]; then
+            aws s3 cp $source_vcf $vcf_dir
+            aws s3 cp $source_vcf.tbi $vcf_dir
+        fi
         
         # run svtyper on the vcf/cram
-        svtyper --input_vcf $vcf \
-                --bam       $cram \
-                --ref_fasta $fasta |
+        bcftools view -i 'SVTYPE="DEL"' $vcf |
+        svtyper --bam $cram --ref_fasta $fasta |
         bgzip -c > $out_dir/$sample.svtyper.duphold.vcf.gz
         tabix $out_dir/$sample.svtyper.duphold.vcf.gz
 
@@ -60,26 +61,27 @@ svtyper_sample() {
         aws s3 cp $out_dir/$sample.svtyper.duphold.vcf.gz $s3_dest
         aws s3 cp $out_dir/$sample.svtyper.duphold.vcf.gz.tbi $s3_dest
 
+        # TODO uncomment
         # and clean up
-        rm $cram $cram.crai
-        rm $vcf $vcf.tbi
-        rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz
-        rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz.tbi
+        # rm $cram $cram.crai
+        # rm $vcf $vcf.tbi
+        # rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz
+        # rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz.tbi
 
-    fi
+    # fi
 }
 export -f svtyper_sample
 
-mkdir /mnt/local/data
-mkdir /mnt/local/data/CRAM
-mkdir /mnt/local/data/ref
-mkdir /mnt/local/data/VCF
-mkdir /mnt/local/data/output
+# mkdir /mnt/local/data
+# mkdir /mnt/local/data/CRAM
+# mkdir /mnt/local/data/ref
+# mkdir /mnt/local/data/VCF
+# mkdir /mnt/local/data/output
 
 cram_dir=/mnt/local/data/CRAM
 ref_dir=/mnt/local/data/ref
 vcf_dir=/mnt/local/data/VCF
-out_dir=/mnt/local/data/VCF/output
+out_dir=/mnt/local/data/output
 
 n_tasks=$1
 
@@ -92,11 +94,13 @@ fasta=$ref_dir/GRCh38_full_analysis_set_plus_decoy_hla.fa
 
 # for each vcf in 1kg-duphold set
 s3_loc="s3://layerlab/samplot-ml/1kg/duphold_callset"
-s3_dest="s3://layerlab/samplot-ml/1kg/svtyper_duphold_callset"
-aws s3 ls "$s3_loc/" |
+s3_dest="s3://layerlab/samplot-ml/1kg/svtyper_duphold_callset/"
+vcf_list=$(aws s3 ls "$s3_loc/" |
     grep -E 'vcf.gz$' |
     sed -E 's/ +/\t/g' |
-    cut -f4 |
+    cut -f4)
+
+echo "$vcf_list" | head -1 |
     gargs -p $n_tasks \
         "svtyper_sample --source-vcf $s3_loc/{} \\
                         --vcf-dir $vcf_dir \\
