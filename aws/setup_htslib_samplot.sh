@@ -100,7 +100,12 @@ git clone https://github.com/ryanlayer/samplot.git ~/samplot
 conda deactivate
 
 # smoove ------------------------------------------------------------------------------------------
-# conda create -y --name smoove
-# conda activate smoove
-# conda install -y smoove
+conda create -y --name smoove
+conda activate smoove
+conda install -y smoove
+# use my patch of svtyper that fixes 'CIPOS' error
+git clone https://github.com/mchowdh200/svtyper.git
+cd svtyper
+pip install -e .
+cd -
 
