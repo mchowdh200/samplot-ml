@@ -64,8 +64,8 @@ function svtyper_sample {
         # and clean up
         rm $cram $cram.crai
         rm $vcf $vcf.tbi
-        rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz
-        rm $out_dir/$out_dir/$sample.svtyper.duphold.vcf.gz.tbi
+        rm $out_dir/$sample.svtyper.duphold.vcf.gz
+        rm $out_dir/$sample.svtyper.duphold.vcf.gz.tbi
 
     # fi
 }
