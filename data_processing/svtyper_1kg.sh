@@ -71,11 +71,13 @@ function svtyper_sample {
 }
 export -f svtyper_sample
 
-mkdir /mnt/local/data
-mkdir /mnt/local/data/CRAM
-mkdir /mnt/local/data/ref
-mkdir /mnt/local/data/VCF
-mkdir /mnt/local/data/output
+if [ ! -d /mnt/local/data ]; then
+    mkdir /mnt/local/data
+    mkdir /mnt/local/data/CRAM
+    mkdir /mnt/local/data/ref
+    mkdir /mnt/local/data/VCF
+    mkdir /mnt/local/data/output
+fi
 
 cram_dir=/mnt/local/data/CRAM
 ref_dir=/mnt/local/data/ref
@@ -99,7 +101,7 @@ vcf_list=$(aws s3 ls "$s3_loc/" |
     sed -E 's/ +/\t/g' |
     cut -f4)
 
-echo "$vcf_list" | head -1 |
+echo "$vcf_list" |
     gargs -p $n_tasks \
         "svtyper_sample --source-vcf $s3_loc/{} \\
                         --vcf-dir $vcf_dir \\
