@@ -7,6 +7,8 @@ set -u
 function duphold_sample
 {
     set -eu
+
+    # TODO add kwargs
     cram_url=$1
     cram_dir=$2
     callset_vcf=$3
