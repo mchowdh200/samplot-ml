@@ -95,7 +95,10 @@ chmod +x /mnt/local/bin/gargs
 conda create -y --name samplot
 conda activate samplot
 conda install -y python=3.6 matplotlib numpy cython
-pip install pysam
+git clone https://github.com/pysam-developers/pysam.git ~/pysam
+cd pysam
+pip install -e .
+cd -
 git clone https://github.com/ryanlayer/samplot.git ~/samplot
 conda deactivate
 
