@@ -5,7 +5,7 @@ set exuo pipefail
 
 # some common dependencies ------------------------------------------------------------------------
 sudo apt-get update
-sudo apt-get install -y build-essential git libfuse-dev libcurl4-openssl-dev libxml2-dev mime-support automake libtool pkg-config libssl-dev ncurses-dev awscli python-pip libbz2-dev liblzma-dev unzip openjdk-8-jre-headless
+sudo apt-get install -y build-essential git libfuse-dev libcurl4-openssl-dev libxml2-dev mime-support automake libtool pkg-config libssl-dev ncurses-dev awscli python-pip libbz2-dev liblzma-dev unzip openjdk-8-jre-headless imagemagick
 
 # mount storage -----------------------------------------------------------------------------------
 export TMPDIR=/mnt/local
