@@ -1,30 +1,35 @@
 #!/bin/bash
 
-set -e
+set -eu
 
-vcf=$1
-out_dir=$2
+exclude_regions_bed=$1
+true_pos_1kg=$2
+out_dir=$3
 
-bcftools view -i 'SVTYPE="DEL"' $vcf \
-    | bcftools query -f '%CHROM\t%POS\t%INFO/END[,%SAMPLE\t%GT]\n' \
-    | python3 sample_del.py > $out_dir/1kg_regions.bed
- 
-# genomes related to the test set genomes
-# also excluding chromosome X because I noticed a lot of false posotives
-exclude=(NA12878 NA12891 NA12892 
-         HG00512 HG00513 HG00514 
-         HG00731 HG00732 HG00733
-         NA19238 NA19239 NA19240
-         X)
+# genomes related to test set
+removed_genomes=(NA12878 NA12891 NA12892 
+                 HG00512 HG00513 HG00514 
+                 HG00731 HG00732 HG00733
+                 NA19238 NA19239 NA19240)
+removed_genomes=$(echo ${removed_genomes[@]} | tr " " "|") # construct regex from array
 
-exclude=$(echo ${exclude[@]} | tr " " "|") # construct regex from array
+# # sample false positives --------------------------------------------------------------------------
+grep -Ev "$removed_genomes" $exclude_regions_bed |
+    grep -E '0\/1|1\/1' |
+    python3 sample_exclude_regions.py 65 1.0 > $out_dir/ref.bed
 
-# sample 100k from each category while excludeing test set genomes
-grep -E -v "$exclude" $out_dir/1kg_regions.bed | grep "ref" | shuf -n 150000 > $out_dir/ref.sampled.bed
-grep -E -v "$exclude" $out_dir/1kg_regions.bed | grep "het" | shuf -n 150000 > $out_dir/het.sampled.bed
-grep -E -v "$exclude" $out_dir/1kg_regions.bed | grep "alt" | shuf -n 150000 > $out_dir/alt.sampled.bed
+# # sample true negatives ---------------------------------------------------------------------------
+grep -Ev "$removed_genomes" $exclude_regions_bed |
+    grep -E '0\/0' |
+    python3 sample_exclude_regions.py 1 0.05 >> $out_dir/ref.bed
 
-cat $out_dir/ref.sampled.bed \
-    $out_dir/het.sampled.bed \
-    $out_dir/alt.sampled.bed > $out_dir/training_regions.bed
+# sample true positives ---------------------------------------------------------------------------
+# heterozygous deletions
+grep -Ev "$removed_genomes" $true_pos_1kg |
+    grep -E '0\|1|1\|0' |
+    python3 sample_del.py 6 > $out_dir/het.bed
 
+# heterozygous deletions
+grep -Ev "$removed_genomes" $true_pos_1kg |
+    grep -E '1\|1' |
+    python3 sample_del.py 7 > $out_dir/alt.bed
