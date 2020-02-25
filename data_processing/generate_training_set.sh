@@ -30,7 +30,7 @@ cram_list=/home/ubuntu/samplot-ml/data_listings/1kg_high_cov_crams_s3.txt
 cat $cram_list | gargs -p $n_tasks "aws s3 cp {}.crai $data_dir/cram"
 
 # generate the images
-cat $training_regions | head | gargs -p $n_tasks \
+cat $training_regions | gargs -p $n_tasks \
     "bash gen_img.sh \\
         --chrom {0} --start {1} --end {2} --sample {3} --genotype {6} \\
         --min-mqual 10 \\
