@@ -7,10 +7,13 @@
 # if the chr start end in the first interval are the 
 # same as the previous line's, then only change the end 
 # of the second interval.
+set -eu
+
+bed=$1
 
 bedtools intersect \
-    -a ~/data/1kg/BED/exclude_all.sorted.bed \
-    -b ~/data/1kg/BED/exclude_all.sorted.bed \
+    -a $bed \
+    -b $bed \
     -f 0.7 -r -wa -wb |
     awk 'BEGIN{OFS="\t"} {
         if ($1==chrA && $2==startA && $3==endA) {
