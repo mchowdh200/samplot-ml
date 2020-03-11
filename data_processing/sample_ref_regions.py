@@ -11,15 +11,7 @@ Note: regardless of the input genotype, we will consider the output
 
 class Region:
     def __init__(self, chrom, start, end, sample, AB, dhffc, GT):
-        self.chrom = chrom
-        self.start = int(start)
-        self.end = int(end)
-        self.sample = sample
-        self.AB = float(AB) if AB != '.' else AB
-        self.dhffc = float(dhffc) if dhffc != '.' else dhffc
-        self.GT = GT
-
-        self.gt_map = {
+        gt_map = {
             '0|0': 'ref',
             '0/0': 'ref',
             '0|1': 'het',
@@ -29,11 +21,18 @@ class Region:
             '1|1': 'alt',
             '1/1': 'alt',
         }
+        self.chrom = chrom
+        self.start = int(start)
+        self.end = int(end)
+        self.sample = sample
+        self.AB = float(AB) if AB != '.' else AB
+        self.dhffc = float(dhffc) if dhffc != '.' else dhffc
+        self.GT = gt_map.get(GT, GT)
 
     def __str__(self):
         return '\t'.join([
             self.chrom, str(self.start), str(self.end), 
-            self.sample, str(self.AB), str(self.dhffc), self.gt_map[self.GT]
+            self.sample, str(self.AB), str(self.dhffc), self.GT
         ])
 
 
@@ -43,6 +42,10 @@ if __name__ == '__main__':
 
     # % of regions to sample from (0-1)
     region_percentage = float(sys.argv[2])
+
+    gt_override = None
+    if len(sys.argv) == 4:
+        gt_override = sys.argv[3]
 
     # organize entries by region ----------------------------------------------
     region_dict = collections.defaultdict(list)
@@ -60,7 +63,7 @@ if __name__ == '__main__':
                    sample=line[3],
                    AB=line[4],
                    dhffc=line[5],
-                   GT='0/0'))
+                   GT=gt_override if gt_override else '0/0'))
 
     # randomly sample certain % of regions from the region_dict
     # note: list(dict) gives us a list of keys, so we are sampling keys
