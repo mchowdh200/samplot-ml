@@ -74,19 +74,27 @@ fi
 OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
 echo $OUT
 
+
 samplot_cmd=~/samplot/src/samplot.py
 if [ ! -f $OUT ]; then
+    SVLEN=$(bc <<< $END-$START)
+    WINDOW=$(bc <<< 1.5*$SVLEN)
+
     if [[ ! -z $FASTA ]]; then
         FASTA_FLAG="-r $FASTA" # if we didn't provide fasta then the flag var will be unset
     fi
     
-    if [[ $(( $END - $START )) -gt 5000 ]]; then
+    if [[ $SVLEN -gt 5000 ]]; then
         # Too large to plot. Just plot flanking regions and 500 bases around breakpoints
         $samplot_cmd \
-            -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG --zoom 1000
+            -c $CHROM -s $START -e $END \
+            --min_mqual $MIN_MQ -t DEL \
+            -b $BAMS -o $OUT $FASTA_FLAG --zoom 1000
     else
         $samplot_cmd \
-            -c $CHROM -s $START -e $END --min_mqual $MIN_MQ -t DEL -b $BAMS -o $OUT $FASTA_FLAG 
+            -c $CHROM -s $START -e $END \
+            --min_mqual $MIN_MQ -t DEL \
+            -b $BAMS -o $OUT $FASTA_FLAG -w $WINDOW
     fi
 fi
 cd $START_DIR
