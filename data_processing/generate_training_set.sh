@@ -15,10 +15,14 @@ mkdir $data_dir/imgs
 mkdir $data_dir/crop
 
 # get training regions
-aws s3 cp $s3_destination/ref.bed $data_dir/bed
+aws s3 cp $s3_destination/ref-fp.bed $data_dir/bed
+aws s3 cp $s3_destination/ref-tn.bed $data_dir/bed
 aws s3 cp $s3_destination/het.bed $data_dir/bed
 aws s3 cp $s3_destination/alt.bed $data_dir/bed
-cat $data_dir/bed/ref.bed $data_dir/bed/het.bed $data_dir/bed/alt.bed > $data_dir/bed/training_regions.bed
+cat $data_dir/bed/ref-fp.bed \
+    $data_dir/bed/ref-tn.bed \
+    $data_dir/bed/het.bed \
+    $data_dir/bed/alt.bed > $data_dir/bed/training_regions.bed
 training_regions=$data_dir/bed/training_regions.bed
 
 # get reference genome
