@@ -1,8 +1,9 @@
 set -u
 
 # s3_destination="s3://layerlab/samplot-ml/1kg/duphold_callset"
-s3_destination="s3://layerlab/samplot-ml/1kg/training_sets/1kg_exclude_sensitive"
+# s3_destination="s3://layerlab/samplot-ml/1kg/training_sets/1kg_exclude_sensitive"
 n_tasks=$1
+s3_destination=$2
 
 data_dir=/mnt/local/data
 
