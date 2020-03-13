@@ -70,7 +70,15 @@ class DataWriter:
         labels = [f.split('_')[-1].split('.')[0].lower() for f in filenames]
 
         if num_classes == 3:
-            label_to_index = {'ref': 0, 'het': 1, 'alt': 2}
+            label_to_index = {
+                'ref': 0, 'ref-tn': 0, 'ref-fp': 0,
+                'het': 1, 'alt': 2
+            }
+        elif num_classes == 4:
+            label_to_index = {
+                'ref-tn': 0, 'ref-fp': 1,
+                'het': 2, 'alt': 3
+            }
         else:
             label_to_index = {'ref': 0, 'del': 1}
         return [label_to_index[l] for l in labels]
