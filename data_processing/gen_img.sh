@@ -77,8 +77,8 @@ echo $OUT
 
 samplot_cmd=~/samplot/src/samplot.py
 if [ ! -f $OUT ]; then
-    SVLEN=$(bc <<< $END-$START)
-    WINDOW=$(bc <<< 1.5*$SVLEN)
+    SVLEN=$(bc <<< "scale=0; ($END-$START)/1")
+    WINDOW=$(bc <<< "scale=0; (1.5*$SVLEN)/1")
 
     if [[ ! -z $FASTA ]]; then
         FASTA_FLAG="-r $FASTA" # if we didn't provide fasta then the flag var will be unset
