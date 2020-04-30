@@ -38,12 +38,12 @@ function call_and_genotype {
     bam=$(find $data_dir/$sample/BAM/ -name '*.bam' -or -name '*.cram')
     
     # call svs with smoove
-    # smoove call $bam \
-    #     -x \
-    #     -n $sample \
-    #     -f $fasta \
-    #     -e $exclude \
-    #     -o $data_dir/$sample/VCF/SV2 \
+    smoove call $bam \
+        -x \
+        -n $sample \
+        -f $fasta \
+        -e $exclude \
+        -o $data_dir/$sample/VCF/SV2 \
 
     # genotype with sv2
     sv2 -$genome $fasta
@@ -60,8 +60,7 @@ export -f call_and_genotype
 
 
 data_dir=$1
-# samples="HG002\nHG00514\nHG00733\nNA19240"
-samples="HG00514\nHG00733\nNA19240"
+samples="HG002\nHG00514\nHG00733\nNA19240"
 
 # call svs with lumpy (and existing split/discordant reads from previous smoove run)
 printf "$samples" | gargs -p 4 -e \
