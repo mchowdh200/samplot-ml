@@ -63,7 +63,7 @@ cd $BAM_DIR
 
 if [[ -z $BAM_LIST ]]; then # no list provided; use BAM_DIR contents
     # BAMS=$BAM_DIR/$(ls BAM_DIR)
-    BAMS=$(find $BAM_DIR -name *.cram -or -name *.bam)
+    BAMS=$(find $BAM_DIR -name '*.cram' -or -name '*.bam')
 
 elif [[ ! -z $SEP_BY_CHROM ]]; then # hack!
     BAMS=$(grep -P "(?=.*$CHROM\.)(?=.*$SAMPLE)" $BAM_LIST)
@@ -75,7 +75,7 @@ OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
 echo $OUT
 
 
-samplot_cmd=~/samplot/src/samplot.py
+# samplot_cmd=~/samplot/src/samplot.py
 if [ ! -f $OUT ]; then
     SVLEN=$(bc <<< "scale=0; ($END-$START)/1")
     WINDOW=$(bc <<< "scale=0; (1.5*$SVLEN)/1")
@@ -86,15 +86,15 @@ if [ ! -f $OUT ]; then
     
     if [[ $SVLEN -gt 5000 ]]; then
         # Too large to plot. Just plot flanking regions and 500 bases around breakpoints
-        $samplot_cmd \
+        samplot.py \
             -c $CHROM -s $START -e $END \
             --min_mqual $MIN_MQ -t DEL \
-            -b $BAMS -o $OUT $FASTA_FLAG --zoom 1000
+            -b $BAMS -o $OUT $FASTA_FLAG --zoom 1000 --no_haplotypes
     else
-        $samplot_cmd \
+        samplot.py \
             -c $CHROM -s $START -e $END \
             --min_mqual $MIN_MQ -t DEL \
-            -b $BAMS -o $OUT $FASTA_FLAG -w $WINDOW
+            -b $BAMS -o $OUT $FASTA_FLAG -w $WINDOW --no_haplotypes
     fi
 fi
 cd $START_DIR
