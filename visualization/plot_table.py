@@ -4,51 +4,51 @@ import numpy as np
 import matplotlib
 import pylab
 import random
-from optparse import OptionParser
+from argparse import ArgumentParser
 import matplotlib.gridspec as gridspec
 
 from matplotlib import rcParams
 rcParams['font.family'] = 'Arial'
 
 delim = '\t'
-parser = OptionParser()
+parser = ArgumentParser()
 
-parser.add_option(
+parser.add_argument(
     "-o",
     "--output_file",
     dest="output_file",
     help="Output file")
 
-parser.add_option(
+parser.add_argument(
     "-i",
     "--input_file",
     dest="input_file",
     help="Input file")
 
-parser.add_option(
+parser.add_argument(
     "--fig_x",
     dest="fig_x",
     type="int",
     default=5,
     help="Figure width")
 
-parser.add_option(
+parser.add_argument(
     "--fig_y",
     dest="fig_y",
     type="int",
     default=5,
     help="Figure height")
 
-(options, args) = parser.parse_args()
-if not options.output_file:
+args = parser.parse_args()
+if not args.output_file:
     parser.error('Output file not given')
 
-if not options.input_file:
+if not args.input_file:
     parser.error('Input file not given')
 
 E = {}
 header = None
-for l in open(options.input_file):
+for l in open(args.input_file):
     A = l.rstrip().split(',')
     if header is None:
         header = A
@@ -75,7 +75,7 @@ for l in open(options.input_file):
         'F1':float(A[8]) }
 
 fig = matplotlib.pyplot.figure(
-    figsize=(options.fig_x,options.fig_y),
+    figsize=(args.fig_x,args.fig_y),
     dpi=300)
 
 samples = ['HG002', 'HG00514', 'HG00733', 'NA19240']
@@ -146,5 +146,5 @@ for sample in samples:
 
     sample_i += 1
 
-matplotlib.pyplot.savefig(options.output_file,bbox_inches='tight')
+matplotlib.pyplot.savefig(args.output_file,bbox_inches='tight')
 
