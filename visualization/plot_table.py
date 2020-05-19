@@ -5,12 +5,12 @@ import matplotlib
 import pylab
 import random
 from argparse import ArgumentParser
+import matplotlib
 import matplotlib.gridspec as gridspec
 
 from matplotlib import rcParams
 rcParams['font.family'] = 'Arial'
 
-delim = '\t'
 parser = ArgumentParser()
 
 parser.add_argument(
@@ -28,14 +28,14 @@ parser.add_argument(
 parser.add_argument(
     "--fig_x",
     dest="fig_x",
-    type="int",
+    type=int,
     default=5,
     help="Figure width")
 
 parser.add_argument(
     "--fig_y",
     dest="fig_y",
-    type="int",
+    type=int,
     default=5,
     help="Figure height")
 
@@ -97,7 +97,7 @@ for sample in samples:
     axs = []
     ys = []
     title_set = False
-    for caller in ['smoove','manta']:
+    for caller in ['lumpy-SVTyper','manta']:
         ax = fig.add_subplot(inner_grid[ax_i])
 
         if not title_set:
