@@ -25,12 +25,9 @@ while (( "$#" )); do
         -f|--fasta)
             FASTA=$2
             shift 2;;
-        -l|--bam-list)
-            BAM_LIST=$2
+        -b|--bam-file)
+            BAM_FILE=$2
             shift 2;;
-        --sep-by-chrom)
-            SEP_BY_CHROM=true
-            shift 1;;
         -d|--bam-dir)
             BAM_DIR=$2
             shift 2;;
@@ -52,7 +49,7 @@ done
 [[ -z $GENOTYPE ]] && echo Missing argument --genotype && exit 1
 # [[ -z $FASTA ]] && echo Missing argument --fasta && exit 1
 # [[ -z $BAM_LIST ]] && echo Missing argument --bam-list && exit 1
-[[ -z $BAM_DIR ]] && echo Missing argument --bam-dir && exit 1
+# [[ -z $BAM_DIR ]] && echo Missing argument --bam-dir && exit 1
 [[ -z $OUT_DIR ]] && echo Missing argument --out-dir && exit 1
 [[ -z $MIN_MQ ]] && MIN_MQ=0
 
@@ -61,24 +58,20 @@ START_DIR=$PWD
 cd $BAM_DIR
 
 
-if [[ -z $BAM_LIST ]]; then # no list provided; use BAM_DIR contents
+if [[ -z $BAM_FILE ]]; then # no list provided; use BAM_DIR contents
     # BAMS=$BAM_DIR/$(ls BAM_DIR)
     BAMS=$(find $BAM_DIR -name '*.cram' -or -name '*.bam')
-
-elif [[ ! -z $SEP_BY_CHROM ]]; then # hack!
-    BAMS=$(grep -P "(?=.*$CHROM\.)(?=.*$SAMPLE)" $BAM_LIST)
 else
-    BAMS=$(grep $SAMPLE $BAM_LIST)
+    BAMS=$BAM_FILE
 fi
 # output file
 OUT=$OUT_DIR/${CHROM}_${START}_${END}_${SAMPLE}_${GENOTYPE}.png
 echo $OUT
 
 
-# samplot_cmd=~/samplot/src/samplot.py
 if [ ! -f $OUT ]; then
     SVLEN=$(bc <<< "scale=0; ($END-$START)/1")
-    WINDOW=$(bc <<< "scale=0; (1.5*$SVLEN)/1")
+    # WINDOW=$(bc <<< "scale=0; (1.5*$SVLEN)/1")
 
     if [[ ! -z $FASTA ]]; then
         FASTA_FLAG="-r $FASTA" # if we didn't provide fasta then the flag var will be unset
@@ -94,7 +87,8 @@ if [ ! -f $OUT ]; then
         samplot.py \
             -c $CHROM -s $START -e $END \
             --min_mqual $MIN_MQ -t DEL \
-            -b $BAMS -o $OUT $FASTA_FLAG -w $WINDOW --no_haplotypes
+            -b $BAMS -o $OUT $FASTA_FLAG --no_haplotypes
+            # -b $BAMS -o $OUT $FASTA_FLAG -w $WINDOW --no_haplotypes
     fi
 fi
 cd $START_DIR
