@@ -99,7 +99,9 @@ git clone https://github.com/pysam-developers/pysam.git ~/pysam
 cd ~/pysam
 pip install -e .
 cd -
-git clone https://github.com/ryanlayer/samplot.git ~/samplot
+git clone https://github.com/mchowdh200/samplot.git ~/samplot
+cd ~/samplot
+pip install -e .
 conda deactivate
 
 # smoove ------------------------------------------------------------------------------------------
