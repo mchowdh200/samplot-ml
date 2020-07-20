@@ -1,6 +1,7 @@
 #!/bin/bash
 
 data_dir="../data_listings"
+out_dir="/mnt/local/data"
 samples=( XA01 XA61 XA79 XE09 XE32 XH82 XH96 )
 
 # get the regions
@@ -19,7 +20,6 @@ sed -E -e 's/0\/1|1\/0/het/g' -e 's/1\/1/alt/g' -e 's/0\/0/ref/g' \
         --min-mqual 10 --bam-file s3://layerlabcu/xelect_bams/{3}.bam \\
         -o /mnt/local/data"
 
-
 # for sample in ${samples[@]};do
 #     # get the regions
 #     aws s3 cp s3://layerlabcu/samplot-ml/salmon/$sample.bed $data_dir
@@ -28,7 +28,12 @@ sed -E -e 's/0\/1|1\/0/het/g' -e 's/1\/1/alt/g' -e 's/0\/0/ref/g' \
 #     aws s3 cp s3://layerlabcu/xelect_bams/$sample.bam.bai .
 
 #     # feed to gen_img
-#     cat $data_dir/$sample.bed | gargs --dry-run -p 4 \
+#     cat $data_dir/$sample.bed | gargs -p 4 \
 #         "bash gen_img.sh -c {0} -s {1} -e {2} -n $sample -g {3} \\
-#                          -m 10 -b $sample.bam -o ~/data/"
+#                          -m 10 -b s3://layerlabcu/xelect_bams/$sample.bam -o $out_dir/imgs"
+
+#     bash crop.sh -p 4 -d $out_dir/imgs -o $out_dir/crop
 # done
+
+aws s3 cp --recursive $out_dir/imgs/ s3://layerlabcu/samplot-ml/salmon/xelect_full/imgs/
+aws s3 cp --recursive $out_dir/crop/ s3://layerlabcu/samplot-ml/salmon/xelect_ful/crop/
