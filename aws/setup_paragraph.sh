@@ -13,7 +13,6 @@ cd boost_1_65_0
 
 export BOOST_ROOT=$HOME/boost_1_65_0_install
 
-
 cd ~
 git clone https://github.com/Illumina/paragraph.git
 cd paragraph
@@ -22,11 +21,9 @@ cd build
 cmake ~/paragraph
 make
 
-# TODO create conda env
-# install pysam
-# intervaltree
+# create conda env
 conda create --name paragraph -y
-conda activate paragrph
-conda install pysam intervaltree
+source activate paragraph
+conda install -y pysam intervaltree
 
 
