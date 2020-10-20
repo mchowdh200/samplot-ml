@@ -4,8 +4,7 @@ set -eu
 
 [[ ! -d /mnt/local/data ]] && mkdir /mnt/local/data
 
-out_dir=/mnt/local/data/out
-mkdir $out_dir
+[[ ! -d /mnt/local/data/out ]] && mkdir /mnt/local/data/out
 
 # get reference
 aws s3 cp --recursive \
@@ -13,8 +12,9 @@ aws s3 cp --recursive \
     /mnt/local/data/g1k_v37_decoy/
 
 # get BAM
-aws s3 cp --recursive \
-    s3://layerlabcu/samplot-ml/HG002/BAM/ \
+aws s3 cp s3://layerlabcu/samplot-ml/HG002/BAM/hg002.bam \
+    /mnt/local/data/BAM/
+aws s3 cp s3://layerlabcu/samplot-ml/HG002/BAM/hg002.bam.bai \
     /mnt/local/data/BAM/
 
 # get vcfs
@@ -32,13 +32,23 @@ read_length=$(samtools view /mnt/local/data/BAM/hg002.bam |
     python3 -c 'import sys, statistics; print(statistics.mean([float(i.rstrip()) for i in sys.stdin]))')
 printf "id\tpath\tdepth\tread length\nHG002\t/mnt/local/data/BAM/hg002.bam\t$read_depth\t$read_length\n" > /mnt/local/data/samples.txt
 
-# TODO For each vcf: run paragraph
+# ===
+# TEST ON THE ORIG VCF
+# [[ ! -d /mnt/local/data/out/variants0 ]] && mkdir /mnt/local/data/out/variants0
+# python3 ~/paragraph/build/bin/multigrmpy.py \
+#     -i /mnt/local/data/VCF/variants0.vcf \
+#     -m /mnt/local/data/samples.txt \
+#     -r /mnt/local/data/g1k_v37_decoy/g1k_v37_decoy.fa \
+#     -o /mnt/local/data/out/variants0 &> log.txt
+# ===
+
 
 for vcf in $(ls /mnt/local/data/VCF); do
-    [[ ! -d /mnt/local/data/out/$(basename $vcf) ]] && mkdir /mnt/loca/data/out/$(basename $vcf)
+    echo $vcf ---------------------------------------------
+    [[ ! -d /mnt/local/data/out/$(basename $vcf .vcf) ]] && mkdir /mnt/local/data/out/$(basename $vcf .vcf)
     python3 ~/paragraph/build/bin/multigrmpy.py \
-        -i $vcf \
+        -i /mnt/local/data/VCF/$vcf \
         -m /mnt/local/data/samples.txt \
         -r /mnt/local/data/g1k_v37_decoy/g1k_v37_decoy.fa \
-        -o /mnt/local/data/out/$(basename $vcf)
+        -o /mnt/local/data/out/$(basename $vcf .vcf) &> log.txt
 done
