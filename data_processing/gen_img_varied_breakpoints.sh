@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eu
 
 data_dir=/mnt/local/data
 
@@ -6,7 +7,7 @@ data_dir=/mnt/local/data
 aws s3 cp --recursive s3://layerlabcu/ref/genomes/GRCh38_full_analysis_set_plus_decoy_hla/ \
     $data_dir/GRCh38_full_analysis_set_plus_decoy_hla/
 
-# TODO get bam
+# get bam
 aws s3 cp s3://layerlabcu/samplot-ml/HG002/BAM/hg002.bam $data_dir/BAM/
 aws s3 cp s3://layerlabcu/samplot-ml/HG002/BAM/hg002.bam.bai $data_dir/BAM/
 
@@ -32,7 +33,7 @@ for vcf in $(ls $data_dir/VCF); do
     fi
 
     # generate images
-    bcftools query -f '%CHROM\t%POS\t%INFO/END\n' $data_dir/$vcf |
+    bcftools query -f '%CHROM\t%POS\t%INFO/END\n' $data_dir/VCF/$vcf |
         gargs -p 36 -e \
             "bash gen_img.sh \\
                 --chrom {0} --start {1} --end {2} \\
