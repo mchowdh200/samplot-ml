@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eu
 
 data_dir=/mnt/local/data
 [[ ! -d $data_dir ]] && mkdir $data_dir
@@ -26,12 +27,12 @@ bam=$data_dir/BAM/HG00514.alt_bwamem_GRCh38DH.20150715.CHS.high_coverage.cram
 for bed in $(ls $data_dir/BED); do
     out_dir=$(basename $bed .bed)
     img_type=$(cut -d'.' -f1-2 <<<$out_dir)
-    [[ ! -d $data_dir/$out_dir ]] && mkdir $out_dir
+    [[ ! -d $data_dir/$out_dir ]] && mkdir $data_dir/$out_dir
 
     # cat bed into gargs
     # pipe into gen_img.sh
-    cat $bed | gargs -p 36 \
+    cat $data_dir/BED/$bed | gargs -p 36 \
         "bash gen_img.sh \\
             -c {0} -s {1} -e {2} -n HG00514 -g $img_type \\
-            -m 10 -f $ref -b $bam -o $out_dir"
+            -m 10 -f $ref -b $bam -o $data_dir/$out_dir"
 done
