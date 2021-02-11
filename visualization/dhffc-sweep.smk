@@ -10,7 +10,7 @@ dhffc_range = np.linspace(0, 1.0, 100)
 rule all:
     input:
         # "/dhffc-sweep.png"
-        expand("{config[outdir]}/vcf/vcf-{dhffc}.txt", dhffc=dhffc_range)
+        expand(config["outdir"]+"/vcf/vcf-{dhffc}.txt", dhffc=dhffc_range)
 
 rule filter_dhffc:
     input:
