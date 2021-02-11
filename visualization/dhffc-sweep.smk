@@ -19,7 +19,7 @@ rule filter_dhffc:
         vcf = temp(config["outdir"]+"/vcf/filtered-lt-{dhffc}.vcf.gz"),
         index = temp(config["outdir"]+"/vcf/filtered-lt-{dhffc}.vcf.gz.tbi")
     shell:
-        """bcftools view -i 'DHFFC < {wildcards.dhffc}' |
+        """bcftools view -i 'DHFFC < {wildcards.dhffc}' {input} |
            bgzip -c > {output.vcf}
            tabix {output.vcf}"""
 
