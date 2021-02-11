@@ -29,7 +29,7 @@ rule evaluate:
         truth_set = config["truth_set"]
     output:
         txt=config["outdir"]+"/vcf/truvari-{dhffc}.txt",
-        dir=temp(directory("{config[outdir]}/vcf/truvari-{dhffc}"))
+        dir=temp(directory(config["outdir"]+"/vcf/truvari-{dhffc}"))
     shell:
         """bash ../evaluation/truvari.sh -b {input.truth_set} \
                            -c {input.filtered} \
