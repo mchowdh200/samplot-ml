@@ -1,5 +1,5 @@
 
-config = "dhffc-sweep-config.yaml"
+configfile: "dhffc-sweep-config.yaml"
 input_vcf = config['input_vcf']
 truth_set = config['truth_set']
 outdir = config['outdir']
