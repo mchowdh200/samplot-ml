@@ -36,7 +36,7 @@ rule evaluate:
         """bash ../evaluation/truvari.sh -b {input.truth_set} \
                            -c {input.filtered} \
                            -o {output.dir} &> {log}
-           cp {log} {ouput.txt}"""
+           cp {log} {output.txt}"""
         
         
         
