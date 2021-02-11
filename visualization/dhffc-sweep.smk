@@ -15,7 +15,7 @@ rule filter_dhffc:
     input:
         config["input_vcf"]
     output:
-        vcf = temp("{config[outdir]}/vcf/filtered-lt-{dhffc}.vcf.gz")
+        vcf = temp("{config[outdir]}/vcf/filtered-lt-{dhffc}.vcf.gz"),
         index = temp("{config[outdir]}/vcf/filtered-lt-{dhffc}.vcf.gz.tbi")
     shell:
         """bcftools view -i 'DHFFC < {wildcards.dhffc}' |
@@ -24,10 +24,10 @@ rule filter_dhffc:
 
 rule evaluate:
     input:
-        filtered = "{config[outdir]}/vcf/filtered-lt-{dhffc}.vcf.gz"
+        filtered = "{config[outdir]}/vcf/filtered-lt-{dhffc}.vcf.gz",
         truth_set = config["truth_set"]
     output:
-        text="{config[outdir]}/vcf/truvari-{dhffc}.txt"
+        text="{config[outdir]}/vcf/truvari-{dhffc}.txt",
         dir=temp(directory("{config[outdir]}/vcf/truvari-{dhffc}"))
     shell:
         """bash truvari.sh -b {input.truth_set} \
