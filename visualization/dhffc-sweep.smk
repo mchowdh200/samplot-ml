@@ -26,7 +26,7 @@ rule filter_dhffc:
 rule evaluate:
     input:
         filtered = config["outdir"]+"/vcf/filtered-lt-{dhffc}.vcf.gz",
-        filtered_index = config["outdir"]+"/vcf/filtered-lt-{dhffc}.vcf.gz.tbi"
+        filtered_index = config["outdir"]+"/vcf/filtered-lt-{dhffc}.vcf.gz.tbi",
         truth_set = config["truth_set"]
     output:
         txt=config["outdir"]+"/vcf/truvari-{dhffc}.txt",
