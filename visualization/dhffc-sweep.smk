@@ -30,10 +30,13 @@ rule evaluate:
     output:
         txt=config["outdir"]+"/vcf/truvari-{dhffc}.txt",
         dir=temp(directory(config["outdir"]+"/vcf/truvari-{dhffc}"))
+    log:
+        config["logdir"]+"evaluate-{dhffc}.log"
     shell:
         """bash ../evaluation/truvari.sh -b {input.truth_set} \
                            -c {input.filtered} \
-                           -o {output.dir} &> {output.txt}"""
+                           -o {output.dir} &> {log}
+           cp {log} {ouput.txt}"""
         
         
         
