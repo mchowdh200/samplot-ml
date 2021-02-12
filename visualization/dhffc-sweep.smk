@@ -20,7 +20,7 @@ rule all:
 
 rule filter_dhffc:
     input:
-        config['outdir'][sample]
+        config['input_vcf'][sample]
     output:
         vcf = temp(config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz"),
         index = temp(config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz.tbi")
