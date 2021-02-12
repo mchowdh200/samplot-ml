@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-import matplotlib as plt
+import matplotlib.pyplot as plt
 
 configfile: "dhffc-sweep-config.yaml"
 input_vcf = config['input_vcf']
