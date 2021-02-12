@@ -12,8 +12,8 @@ dhffc_range = np.around(np.linspace(0, 1.0, 101), 2)
 rule all:
     input:
         # config["outdir"]+"/dhffc-sweep.png"
-        expand(config["outdir"]+"/{sample}/truvari-{dhffc}.txt",
-               sample=samples, dhffc=dhffc_range)
+        expand(config["outdir"]+"/{sample}/stats-{dhffc}.txt",
+               dhffc=dhffc_range, sample=samples)
 
 rule filter_dhffc:
     """
