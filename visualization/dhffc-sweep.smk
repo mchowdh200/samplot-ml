@@ -14,7 +14,7 @@ rule all:
         # config["outdir"]+"/dhffc-sweep.png"
         # expand(config["outdir"]+"/{sample}/stats-{dhffc}.txt",
         #        dhffc=dhffc_range, sample=samples)
-        expand(config["outdir"]+"/{sample}/stats-combined.txt",
+        expand(config["outdir"]+"/{sample}/stats.txt",
                sample=samples)
 
 rule filter_dhffc:
