@@ -7,7 +7,6 @@ outdir = config['outdir']
 logdir = config['logdir']
 
 samples = ["HG002", "HG00514", "HG00733", "NA19240"]
-sample = lambda w: w.samples # resolves sample name wildcard
 dhffc_range = np.around(np.linspace(0, 1.0, 101), 2)
 
 rule all:
@@ -20,7 +19,7 @@ rule all:
 
 rule filter_dhffc:
     input:
-        config['input_vcf'][sample]
+        lambda w: config["input_vcf"][w.sample] # resolves sample name wildcard
     output:
         vcf = temp(config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz"),
         index = temp(config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz.tbi")
@@ -33,7 +32,7 @@ rule evaluate:
     input:
         filtered = config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz",
         filtered_index = config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz.tbi",
-        truth_set = config["truth_set"]["{sample}"]
+        truth_set = lambda w: config["truth_set"][w.sample]
     output:
         txt=config["outdir"]+"/{sample}/truvari-{dhffc}.txt",
         dir=temp(directory(config["outdir"]+"/{sample}/truvari-{dhffc}"))
