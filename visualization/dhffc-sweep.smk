@@ -1,4 +1,7 @@
+import os
 import numpy as np
+import pandas as pd
+import matplotlib as plt
 
 configfile: "dhffc-sweep-config.yaml"
 input_vcf = config['input_vcf']
@@ -11,11 +14,11 @@ dhffc_range = np.around(np.linspace(0, 1.0, 101), 2)
 
 rule all:
     input:
-        # config["outdir"]+"/dhffc-sweep.png"
+        config["outdir"]+"/dhffc-sweep.png"
         # expand(config["outdir"]+"/{sample}/stats-{dhffc}.txt",
         #        dhffc=dhffc_range, sample=samples)
-        expand(config["outdir"]+"/{sample}-stats.txt",
-               sample=samples)
+        # expand(config["outdir"]+"/{sample}-stats.txt",
+        #        sample=samples)
 
 rule filter_dhffc:
     """
@@ -80,6 +83,28 @@ rule combine_sample_stats:
         config["outdir"]+"/{sample}-stats.txt"
     shell:
         """
-        cat {input} | sort | cat <(printf "dhffc\tTP\tFP\tFN\n") - > {output}
+        cat <(printf "dhffc\tTP\tFP\tFN\n") {input} > {output}
         """
+
+rule plot_sample_stats:
+    """
+    Plot of FP vs TP for each sample on same plot.
+    """
+    input:
+        expand(config["outdir"]+"/{sample}-stats.txt", sample=samples)
+    output:
+        config["outdir"]+"/dhffc-sweep.png"
+    run:
+        curves = []
+        samples = []
+        for file in input:
+            samples.append(os.path.basename(file).split('.')[0])
+            df = pd.read_csv(file, sep='\t').sort("dhffc", inplace=True)
+            curves.append(plt.plot(df.FP, df.TP))
+
+            split_point = df.loc[df["dhffc"] == 0.7]
+            plt.plot(split_point.FP, split_point.TP, marker='o')
+        plt.legend(curves, samples)
+        plt.savefig(output[0])
+                
         
