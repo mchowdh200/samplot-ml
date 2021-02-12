@@ -14,7 +14,7 @@ rule all:
         # config["outdir"]+"/dhffc-sweep.png"
         # expand(config["outdir"]+"/{sample}/stats-{dhffc}.txt",
         #        dhffc=dhffc_range, sample=samples)
-        expand(config["outdir"]+"/{sample}/stats.txt",
+        expand(config["outdir"]+"/{sample}-stats.txt",
                sample=samples)
 
 rule filter_dhffc:
@@ -77,7 +77,7 @@ rule combine_sample_stats:
         expand(config["outdir"]+"/{sample}/stats-{dhffc}.txt",
                dhffc=dhffc_range, sample=lambda w: [w.sample])
     output:
-        config["outdir"]+"/{sample}/stats.txt"
+        config["outdir"]+"/{sample}-stats.txt"
     shell:
         """
         cat <(printf "dhffc\tTP\tFP\tFN\n") {input} | sort > {output}
