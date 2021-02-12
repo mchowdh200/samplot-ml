@@ -6,7 +6,7 @@ truth_set = config['truth_set']
 outdir = config['outdir']
 logdir = config['logdir']
 
-samples = ["HG002",]
+samples = ["HG002", "HG00514", "HG00733", "NA19240"]
 dhffc_range = np.around(np.linspace(0, 1.0, 101), 2)
 
 rule all:
