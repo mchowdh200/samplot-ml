@@ -99,12 +99,16 @@ rule plot_sample_stats:
         samples = []
         for file in input:
             samples.append(os.path.basename(file).split('.')[0])
-            df = pd.read_csv(file, sep='\t').sort("dhffc", inplace=True)
+            df = pd.read_csv(file, sep='\t') \
+                   .sort_values(by="dhffc", inplace=True)
             curves.append(plt.plot(df.FP, df.TP))
 
             split_point = df.loc[df["dhffc"] == 0.7]
             plt.plot(split_point.FP, split_point.TP, marker='o')
+        plt.axis('off')
+        plt.xlabel('False Positives')
+        plt.ylabel('True Positives')
+        plt.title('Duphold DHFFC sweep: False Positives vs. True Positives')
         plt.legend(curves, samples)
         plt.savefig(output[0])
-                
-        
+
