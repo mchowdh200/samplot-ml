@@ -7,6 +7,7 @@ outdir = config['outdir']
 logdir = config['logdir']
 
 samples = ["HG002", "HG00514", "HG00733", "NA19240"]
+sample = lambda w: w.samples # resolves sample name wildcard
 dhffc_range = np.around(np.linspace(0, 1.0, 101), 2)
 
 rule all:
@@ -19,7 +20,7 @@ rule all:
 
 rule filter_dhffc:
     input:
-        lambda w: config["input_vcf"][wildcards.samples]
+        config['outdir'][sample]
     output:
         vcf = temp(config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz"),
         index = temp(config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz.tbi")
