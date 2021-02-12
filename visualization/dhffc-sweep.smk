@@ -73,7 +73,7 @@ rule combine_sample_stats:
     """
     input:
         expand(config["outdir"]+"/{sample}/stats-{dhffc}.txt",
-               dhffc=dhffc_range)
+               dhffc=dhffc_range, sample=lambda w: [w.sample])
     output:
         config["outdir"]+"/{sample}/stats-combined.txt"
     shell:
