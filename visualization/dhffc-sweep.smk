@@ -19,7 +19,7 @@ rule all:
 
 rule filter_dhffc:
     input:
-        config["input_vcf"]["{sample}"]
+        lambda w: config["input_vcf"][wildcards.samples]
     output:
         vcf = temp(config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz"),
         index = temp(config["outdir"]+"/{sample}/filtered-lt-{dhffc}.vcf.gz.tbi")
