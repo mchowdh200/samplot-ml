@@ -65,7 +65,7 @@ rule get_sample_stats:
                 if '"TP-call":' in s: TP = int(s.split()[1].rstrip(','))
                 elif '"FP":' in s: FP = int(s.split()[1].rstrip(','))
                 elif '"FN":' in s: FN = int(s.split()[1].rstrip(','))
-            stats.write('\t'.join(wildcards.dhffc, TP, FP, FN))
+            stats.write('\t'.join(map(str, [wildcards.dhffc, TP, FP, FN])))
             stats.write('\n')
 
 rule combine_sample_stats:
@@ -75,11 +75,11 @@ rule combine_sample_stats:
     """
     input:
         expand(config["outdir"]+"/{sample}/stats-{dhffc}.txt",
-               dhffc=dhffc_range, sample=lambda w: [w.sample])
+               dhffc=dhffc_range, sample="{sample}")
     output:
         config["outdir"]+"/{sample}-stats.txt"
     shell:
         """
-        cat <(printf "dhffc\tTP\tFP\tFN\n") {input} | sort > {output}
+        cat {input} | sort | cat <(printf "dhffc\tTP\tFP\tFN\n") - > {output}
         """
         
