@@ -9,7 +9,7 @@ dhffc_range = np.around(np.linspace(0, 1.0, 101), 2)
 
 rule all:
     input:
-        # "/dhffc-sweep.png"
+        # config["outdir"]+"/dhffc-sweep.png"
         expand(config["outdir"]+"/vcf/truvari-{dhffc}.txt", dhffc=dhffc_range)
 
 rule filter_dhffc:
@@ -19,7 +19,7 @@ rule filter_dhffc:
         vcf = temp(config["outdir"]+"/vcf/filtered-lt-{dhffc}.vcf.gz"),
         index = temp(config["outdir"]+"/vcf/filtered-lt-{dhffc}.vcf.gz.tbi")
     shell:
-        """bcftools view -i 'DHFFC < {wildcards.dhffc}' {input} |
+        """bcftools view -i 'DHFFC <= {wildcards.dhffc}' {input} |
            bgzip -c > {output.vcf}
            tabix {output.vcf}"""
 
