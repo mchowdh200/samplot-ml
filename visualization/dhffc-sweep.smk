@@ -1,6 +1,8 @@
 import os
 import numpy as np
 import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 configfile: "dhffc-sweep-config.yaml"
@@ -95,20 +97,18 @@ rule plot_sample_stats:
     output:
         config["outdir"]+"/dhffc-sweep.png"
     run:
-        curves = []
-        samples = []
         for file in input:
-            samples.append(os.path.basename(file).split('.')[0])
+            sample = os.path.basename(file).split('.')[0]
             df = pd.read_csv(file, sep='\t') \
-                   .sort_values(by="dhffc", inplace=True)
-            curves.append(plt.plot(df.FP, df.TP))
+                   .sort_values(by="dhffc")
+            plt.plot(df.FP, df.TP, label=sample)
 
             split_point = df.loc[df["dhffc"] == 0.7]
-            plt.plot(split_point.FP, split_point.TP, marker='o')
-        plt.axis('off')
+            plt.plot(split_point.FP, split_point.TP, marker='o', color='k')
+        # plt.axis('off')
         plt.xlabel('False Positives')
         plt.ylabel('True Positives')
         plt.title('Duphold DHFFC sweep: False Positives vs. True Positives')
-        plt.legend(curves, samples)
+        plt.legend()
         plt.savefig(output[0])
 
