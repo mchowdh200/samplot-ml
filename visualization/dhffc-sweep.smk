@@ -101,14 +101,16 @@ rule plot_sample_stats:
             sample = os.path.basename(file).split('.')[0]
             df = pd.read_csv(file, sep='\t') \
                    .sort_values(by="dhffc")
-            plt.plot(df.FP, df.TP, label=sample)
+            df['TPR'] = df.apply(lambda x: x.TP/(x.TP + x.FN), axis=1)
+            df['FPR'] = df.apply(lambda x: x.FP/(x.FP + x.FN), axis=1)
+            plt.plot(df.FPR, df.TPR, label=sample)
 
             split_point = df.loc[df["dhffc"] == 0.7]
             plt.plot(split_point.FP, split_point.TP, marker='o', color='k')
         # plt.axis('off')
-        plt.xlabel('False Positives')
-        plt.ylabel('True Positives')
-        plt.title('Duphold DHFFC sweep: False Positives vs. True Positives')
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positives Rate')
+        plt.title('Duphold DHFFC sweep: Receiver operating characteristic')
         plt.legend()
         plt.savefig(output[0])
 
