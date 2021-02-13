@@ -106,7 +106,7 @@ rule plot_sample_stats:
             plt.plot(df.FPR, df.TPR, label=sample)
 
             split_point = df.loc[df["dhffc"] == 0.7]
-            plt.plot(split_point.FP, split_point.TP, marker='o', color='k')
+            plt.plot(split_point.FPR, split_point.TPR, marker='o', color='k')
         # plt.axis('off')
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positives Rate')
