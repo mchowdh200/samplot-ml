@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 import numpy as np
 import pandas as pd
 import matplotlib
@@ -35,6 +36,44 @@ rule filter_dhffc:
         """bcftools view -i 'DHFFC <= {wildcards.dhffc}' {input} |
            bgzip -c > {output.vcf}
            tabix {output.vcf}"""
+
+rule eval_baseline:
+    """
+    get performance of non-filtered vcf for each sample.
+    """
+    input:
+        truth_set = lambda w: config["truth_set"][w.sample]
+        baseline_vcf = lambda w: config["input_vcf"][w.sample]
+    output:
+        txt=config["outdir"]+"/{sample}/baseline.txt",
+        dir=temp(directory(config["outdir"]+"/{sample}/baseline-truvari"))
+    log:
+        config["logdir"]+"/{sample}/eval_baseline.log"
+    shell:
+        """bash ../evaluation/truvari.sh -b {input.truth_set} \
+                           -c {input.baseline_vcf} \
+                           -o {output.dir} 2>&1 |
+           tee {log} > {output.txt}"""
+
+rule get_baseline_stats:
+    """
+    get TP, FP, FN info from baseline report
+    """
+    input:
+        config["outdir"]+"/{sample}/baseline.txt"
+    output:
+        temp(config["outdir"]+"/{sample}-baseline-stats.txt")
+    run:
+        # TODO put in function
+        with open(input[0], 'r') as truvari_report, open(output[0], 'w') as stats:
+            for line in truvari_report:
+                s = line.strip()
+                if '"TP-call":' in s: TP = int(s.split()[1].rstrip(','))
+                elif '"FP":' in s: FP = int(s.split()[1].rstrip(','))
+                elif '"FN":' in s: FN = int(s.split()[1].rstrip(','))
+            stats.write('\t'.join(map(str, [TP, FP, FN])))
+            stats.write('\n')
+        
 
 rule evaluate:
     """
@@ -93,24 +132,52 @@ rule plot_sample_stats:
     Plot of FP vs TP for each sample on same plot.
     """
     input:
-        expand(config["outdir"]+"/{sample}-stats.txt", sample=samples)
+        stats = expand(config["outdir"]+"/{sample}-stats.txt",
+                       sample=samples)
+        baseline = expand(config["outdir"]+"/{sample}-baseline-stats.txt",
+                          sample=samples)
     output:
-        config["outdir"]+"/dhffc-sweep.png"
+        roc = config["outdir"]+"/dhffc-sweep.png"
+        diff = config["outdir"]+"/dhffc-sweep-diff.png"
+        baseline_diff = config["outdir"]+"/dhffc-sweep-baseline-diff.png"
     run:
-        for file in input:
-            sample = os.path.basename(file).split('.')[0]
+        # get baseline stats
+        baseline_stats = defaultdict(dict)
+        for file in input.baseline:
+            sample = os.path.basename(file).split('-')[0]
+            with open(file) as f:
+                (baseline_stats[sample]['TP'],
+                 baseline_stats[sample]['FP'],
+                 baseline_stats[sample]['FN']) = \
+                     map(int, f.readline().rsrtip().split())
+                
+        # construct plots
+        dhffc_sweep = plt.figure()
+        dhffc_diff = plt.figure()
+        baseline_diff = plt.figure()
+        for file in input.stats:
+            sample = os.path.basename(file).split('-')[0]
             df = pd.read_csv(file, sep='\t') \
                    .sort_values(by="dhffc")
+
+            # dhffc sweep plot
             df['TPR'] = df.apply(lambda x: x.TP/(x.TP + x.FN), axis=1)
             df['FPR'] = df.apply(lambda x: x.FP/(x.FP + x.FN), axis=1)
-            plt.plot(df.FPR, df.TPR, label=sample)
-
             split_point = df.loc[df["dhffc"] == 0.7]
-            plt.plot(split_point.FPR, split_point.TPR, marker='o', color='k')
-        # plt.axis('off')
-        plt.xlabel('False Positive Rate')
-        plt.ylabel('True Positives Rate')
-        plt.title('Duphold DHFFC sweep: Receiver operating characteristic')
-        plt.legend()
-        plt.savefig(output[0])
+
+            plt.plot(df.FPR, df.TPR, label=sample, figure=dhffc_sweep)
+            plt.plot(split_point.FPR, split_point.TPR,
+                     marker='o', color='k', figure=dhffc_sweep)
+            plt.xlabel('False Positive Rate', figure=dhffc_sweep)
+            plt.ylabel('True Positives Rate', figure=dhffc_sweep)
+            plt.title('Duphold DHFFC sweep: Receiver operating characteristic',
+                      figure=dhffc_sweep)
+            plt.legend(figure=dhffc_sweep)
+            plt.savefig(output.roc, figure=dhffc_sweep)
+
+            # dhffc sweep diff
+            plt.plot(df.FP.diff(), df.TP.diff(), label=sample, figure=dhffc_diff)
+
+            # baseline diff
+
 
