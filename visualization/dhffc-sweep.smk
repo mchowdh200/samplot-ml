@@ -17,8 +17,7 @@ dhffc_range = np.around(np.linspace(0, 1.0, 101), 2)
 
 rule all:
     input:
-        config["outdir"]+"/dhffc-sweep.png"
-        config["outdir"]+"/dhffc-sweep-diff.png"
+        config["outdir"]+"/dhffc-sweep.png",
         config["outdir"]+"/dhffc-sweep-baseline-diff.png"
 
 rule filter_dhffc:
@@ -40,7 +39,7 @@ rule eval_baseline:
     get performance of non-filtered vcf for each sample.
     """
     input:
-        truth_set = lambda w: config["truth_set"][w.sample]
+        truth_set = lambda w: config["truth_set"][w.sample],
         baseline_vcf = lambda w: config["input_vcf"][w.sample]
     output:
         txt=config["outdir"]+"/{sample}/baseline.txt",
@@ -131,12 +130,11 @@ rule plot_sample_stats:
     """
     input:
         stats = expand(config["outdir"]+"/{sample}-stats.txt",
-                       sample=samples)
+                       sample=samples),
         baseline = expand(config["outdir"]+"/{sample}-baseline-stats.txt",
                           sample=samples)
     output:
-        roc = config["outdir"]+"/dhffc-sweep.png"
-        diff = config["outdir"]+"/dhffc-sweep-diff.png"
+        roc = config["outdir"]+"/dhffc-sweep.png",
         baseline_diff = config["outdir"]+"/dhffc-sweep-baseline-diff.png"
     run:
         # get baseline stats
@@ -147,12 +145,11 @@ rule plot_sample_stats:
                 (baseline_stats[sample]['TP'],
                  baseline_stats[sample]['FP'],
                  baseline_stats[sample]['FN']) = \
-                     map(int, f.readline().rsrtip().split())
+                     map(int, f.readline().rstrip().split())
                 
         # construct plots
-        dhffc_sweep = plt.figure()
-        dhffc_diff = plt.figure()
-        baseline_diff = plt.figure()
+        fig1, ax1 = plt.subplots()
+        fig2, ax2 = plt.subplots()
         for file in input.stats:
             sample = os.path.basename(file).split('-')[0]
             df = pd.read_csv(file, sep='\t') \
@@ -162,20 +159,25 @@ rule plot_sample_stats:
             df['TPR'] = df.apply(lambda x: x.TP/(x.TP + x.FN), axis=1)
             df['FPR'] = df.apply(lambda x: x.FP/(x.FP + x.FN), axis=1)
             split_point = df.loc[df["dhffc"] == 0.7]
-
-            plt.plot(df.FPR, df.TPR, label=sample, figure=dhffc_sweep)
-            plt.plot(split_point.FPR, split_point.TPR,
-                     marker='o', color='k', figure=dhffc_sweep)
-            plt.xlabel('False Positive Rate', figure=dhffc_sweep)
-            plt.ylabel('True Positives Rate', figure=dhffc_sweep)
-            plt.title('Duphold DHFFC sweep: Receiver operating characteristic',
-                      figure=dhffc_sweep)
-            plt.legend(figure=dhffc_sweep)
-            plt.savefig(output.roc, figure=dhffc_sweep)
-
-            # dhffc sweep diff
-            plt.plot(df.FP.diff(), df.TP.diff(), label=sample, figure=dhffc_diff)
+            
+            ax1.plot(df.FPR, df.TPR, label=sample)
+            ax1.plot(split_point.FPR, split_point.TPR, marker='o', color='k')
 
             # baseline diff
+            # ax2.clear()
+            
+            df['pct_diff_TP'] = df.apply(
+                    lambda x:
+                        ((np.abs(baseline_stats[sample]['TP']-x.TP)/baseline_stats[sample]['TP']))*100,
+                    axis=1)
+            ax2.plot(df.FP, df.pct_diff_TP, label=sample)
 
+
+        ax1.set_xlabel('False Positive Rate')
+        ax1.set_ylabel('True Positives Rate')
+        ax1.set_title('Duphold DHFFC sweep: Receiver operating characteristic')
+        ax1.legend()
+        ax1.figure.savefig(output.roc)
+
+        ax2.figure.savefig(output.baseline_diff)
 
