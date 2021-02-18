@@ -14,7 +14,7 @@ logdir = config['logdir']
 
 callers = ["smoove", "manta"]
 samples = ["HG002", "HG00514", "HG00733", "NA19240"]
-dhffc_range = np.around(np.linspace(0, 1.0, 101), 2)
+dhffc_range = np.around(np.linspace(0, 1.0, 1001), 3)
 
 rule all:
     input:
@@ -152,7 +152,7 @@ rule plot_sample_stats:
         baseline_diff = config["outdir"]+"/dhffc-sweep-baseline-diff.png"
     run:
         # get baseline stats
-        baseline_stats = defaultdict(defaultdict(dict))
+        baseline_stats = defaultdict(lambda: defaultdict(dict)) # this is gnarly but I love it.
         for file in input.baseline:
             sample = os.path.basename(file).split('-')[0]
             caller = os.path.basename(file).split('-')[1]
@@ -180,7 +180,7 @@ rule plot_sample_stats:
 
         # sum up dhffc stats
         dhffc_summed = {
-            stat: np.zeros_like(dhffc_stats[samples[0]][callers[0]].values)
+            stat: np.zeros_like(dhffc_stats[samples[0]][callers[0]][stat].values)
             for stat in ["TP", "FP", "FN"]}
         for sample in samples:
             for caller in callers:
@@ -189,7 +189,7 @@ rule plot_sample_stats:
             
         # dhffc sweep roc
         for caller in callers:
-            plt.gca().set_color_cycle(None) # reset order of colors
+            plt.gca().set_prop_cycle(None) # reset order of colors
             linestyle = "-" if caller == "smoove" else "--"
             for sample in samples:
                 dhffc_stats[sample][caller]["FPR"] = \
@@ -206,17 +206,54 @@ rule plot_sample_stats:
                 plt.plot(dhffc_stats[sample][caller]["FPR"],
                          dhffc_stats[sample][caller]["TPR"],
                          linestyle=linestyle,
-                         label=sample)
+                         label=sample+" "+caller)
                 plt.plot(split_point["FPR"], split_point["TPR"],
                          marker='o', color='k')
 
         
+        plt.gca().spines['right'].set_visible(False)
+        plt.gca().spines['top'].set_visible(False)
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positives Rate')
         plt.title('Duphold DHFFC sweep: Receiver operating characteristic')
         plt.legend()
         plt.savefig(output.roc)
-        # plt.clear()
+
+        plt.gca().clear()
+
+        # % change plot
+        # x-axis = % change in FP over the baseline
+        # y-axis = % change in TP over the baseline
+        # baseline variable is the baseline_summed
+        # dhffc variable is the dhffc_summed
+        #df['pct_diff_TP'] = df.apply(
+        #    lambda x:
+        #        ((np.abs(baseline_stats[sample]['TP']-x.TP)/baseline_stats[sample]['TP']))*100,
+        #       axis=1)
+        pct_diff_TP = np.abs(
+            baseline_summed["TP"] - dhffc_summed["TP"])/baseline_summed["TP"] * 100
+        pct_diff_FP = np.abs(
+            baseline_summed["FP"] - dhffc_summed["FP"])/baseline_summed["FP"] * 100
+
+        # to find the points 1.1% to 2.4% in TP subtract the TP vector by the target
+        # and find the min afterwards
+        a = np.argmin(np.abs(pct_diff_TP - 1.1))
+        b = np.argmin(np.abs(pct_diff_TP - 2.4))
+
+        plt.gca().invert_yaxis()
+        plt.plot(pct_diff_FP, pct_diff_TP)
+        plt.plot(pct_diff_FP[a], pct_diff_TP[a], marker='o', color='k')
+        plt.plot(pct_diff_FP[b], pct_diff_TP[b], marker='o', color='k')
+        plt.annotate(f"({pct_diff_FP[a]:.2f}, {pct_diff_TP[a]:.2f})",
+                     (pct_diff_FP[a], pct_diff_TP[a]))
+        plt.annotate(f"({pct_diff_FP[b]:.2f}, {pct_diff_TP[b]:.2f})",
+                     (pct_diff_FP[b], pct_diff_TP[b]))
+        plt.xlim([20, 40])
+        plt.ylim([5, 0])
+        plt.xlabel('% Reduction in False Positives')
+        plt.ylabel('% Reduction in True Positives')
+
+
         # TODO placeholder
         plt.savefig(output.baseline_diff)
 
