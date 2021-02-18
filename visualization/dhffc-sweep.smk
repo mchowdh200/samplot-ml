@@ -19,7 +19,8 @@ dhffc_range = np.around(np.linspace(0, 1.0, 1001), 3)
 rule all:
     input:
         config["outdir"]+"/dhffc-sweep.png",
-        config["outdir"]+"/dhffc-sweep-baseline-diff.png"
+        config["outdir"]+"/dhffc-sweep-baseline-diff.png",
+        config["outdir"]+"/dhffc-sweep-baseline-diff-zoomed.png"
 
 rule filter_dhffc:
     """
@@ -128,16 +129,6 @@ rule combine_sample_stats:
         cat <(printf "dhffc\tTP\tFP\tFN\n") {input} > {output}
         """
 
-## TODO modify with smoove/manta
-# for the roc curves, either:
-#    - create two roc curves for separate callers OR
-#    - do one for all, but make the line dashed or dotted, etc.
-# for the baseline diff curves:
-#    - get the baseline stats for each caller
-#    - sum them up?
-#    - sum up sample stats?
-#    - then do a single % diff curve
-
 rule plot_sample_stats:
     """
     Plot of FP vs TP for each sample on same plot.
@@ -149,7 +140,8 @@ rule plot_sample_stats:
                           caller=callers, sample=samples)
     output:
         roc = config["outdir"]+"/dhffc-sweep.png",
-        baseline_diff = config["outdir"]+"/dhffc-sweep-baseline-diff.png"
+        baseline_diff = config["outdir"]+"/dhffc-sweep-baseline-diff.png",
+        baseline_diff_zoomed = config["outdir"]+"/dhffc-sweep-baseline-diff-zoomed.png"
     run:
         # get baseline stats
         baseline_stats = defaultdict(lambda: defaultdict(dict)) # this is gnarly but I love it.
@@ -222,14 +214,6 @@ rule plot_sample_stats:
         plt.gca().clear()
 
         # % change plot
-        # x-axis = % change in FP over the baseline
-        # y-axis = % change in TP over the baseline
-        # baseline variable is the baseline_summed
-        # dhffc variable is the dhffc_summed
-        #df['pct_diff_TP'] = df.apply(
-        #    lambda x:
-        #        ((np.abs(baseline_stats[sample]['TP']-x.TP)/baseline_stats[sample]['TP']))*100,
-        #       axis=1)
         pct_diff_TP = np.abs(
             baseline_summed["TP"] - dhffc_summed["TP"])/baseline_summed["TP"] * 100
         pct_diff_FP = np.abs(
@@ -240,6 +224,14 @@ rule plot_sample_stats:
         a = np.argmin(np.abs(pct_diff_TP - 1.1))
         b = np.argmin(np.abs(pct_diff_TP - 2.4))
 
+        plt.plot(pct_diff_FP, pct_diff_TP)
+        plt.gca().invert_yaxis()
+        plt.xlabel('% Reduction in False Positives')
+        plt.ylabel('% Reduction in True Positives')
+        plt.savefig(output.baseline_diff)
+        plt.gca().clear()
+        
+        # zoomed % change plot
         plt.gca().invert_yaxis()
         plt.plot(pct_diff_FP, pct_diff_TP)
         plt.plot(pct_diff_FP[a], pct_diff_TP[a], marker='o', color='k')
@@ -253,35 +245,8 @@ rule plot_sample_stats:
         plt.xlabel('% Reduction in False Positives')
         plt.ylabel('% Reduction in True Positives')
 
-
-        # TODO placeholder
-        plt.savefig(output.baseline_diff)
+        plt.savefig(output.baseline_diff_zoomed)
 
                 
-        # construct plots
-        # fig1, ax1 = plt.subplots()
-        # fig2, ax2 = plt.subplots()
-        # for file in input.stats:
-        #     sample = os.path.basename(file).split('-')[0]
-        #     caller = os.path.basename(file).split('-')[1]
-        #     df = pd.read_csv(file, sep='\t') \
-        #            .sort_values(by="dhffc")
-
-        #     # dhffc sweep plot
-        #     df['TPR'] = df.apply(lambda x: x.TP/(x.TP + x.FN), axis=1)
-        #     df['FPR'] = df.apply(lambda x: x.FP/(x.FP + x.FN), axis=1)
-        #     split_point = df.loc[df["dhffc"] == 0.7]
-            
-        #     ax1.plot(df.FPR, df.TPR, label=sample)
-        #     ax1.plot(split_point.FPR, split_point.TPR, marker='o', color='k')
-
-        #     # baseline diff
-        #     # ax2.clear()
-            
-        #     df['pct_diff_TP'] = df.apply(
-        #             lambda x:
-        #                 ((np.abs(baseline_stats[sample]['TP']-x.TP)/baseline_stats[sample]['TP']))*100,
-        #             axis=1)
-        #     ax2.plot(df.FP, df.pct_diff_TP, label=sample)
 
 
