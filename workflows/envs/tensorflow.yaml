@@ -1,0 +1,9 @@
+name: tensorflow
+dependencies:
+  - python=3.7
+  - joblib
+  - pip
+  - pip:
+      - tensorflow==2.0.0
+      - tensorflow-addons==0.6.0
+  

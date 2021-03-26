@@ -1,0 +1,8 @@
+name: samplot
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - imagemagick
+  - joblib
+  - samplot

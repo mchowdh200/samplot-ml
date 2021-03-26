@@ -1,0 +1,21 @@
+samples:
+  # TODO script to generate this config:
+  #    * Especially if there are going to be a lot of samples
+  # eg SAMPLE: "PATH/TO/BAM_OR_CRAM"
+  # or SAMPLE: "s3://BUCKET/BAM_OR_CRAM"
+  # or SAMPLE: "http://URL/BAM_OR_CRAM"
+  Yanbian: "s3://layerlabcu/cow/bams/Yanbian_merged_marked.bam"
+
+fasta:
+  data_source: "s3" # local or s3
+  file: "s3://layerlabcu/cow/ARS-UCD1.2_Btau5.0.1Y.prepend_chr.fa"
+fai:
+  data_source: "s3" # local or s3
+  file: "s3://layerlabcu/cow/ARS-UCD1.2_Btau5.0.1Y.prepend_chr.fa.fai"
+
+vcf:
+  data_source: "s3" # local of s3
+  file: "s3://layerlabcu/cow/VCF/sites.smoove.square.vcf.gz"
+
+image_filename_delimiter: "-"
+outdir: "/home/murad/Repositories/samplot-ml/workflows/temp"
