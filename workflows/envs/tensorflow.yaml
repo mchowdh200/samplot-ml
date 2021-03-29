@@ -1,6 +1,7 @@
 name: tensorflow
 dependencies:
   - python=3.7
+  - h5py=2.10
   - joblib
   - pip
   - pip:

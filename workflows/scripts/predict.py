@@ -17,7 +17,7 @@ def main(args):
         predictions = model(images)
         for file, pred in zip(filenames, predictions):
             f = os.path.splitext(os.path.basename(file.numpy()))[0]
-            region = f.split(args.delimiter)
+            region = f.decode().split(args.delimiter)
             print(*region[:3], sep='\t', end='\t')
             print(*pred.numpy(), sep='\t')
 
