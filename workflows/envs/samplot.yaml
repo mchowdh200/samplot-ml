@@ -6,3 +6,5 @@ dependencies:
   - imagemagick
   - joblib
   - samplot
+  - samtools
+  - bcftools

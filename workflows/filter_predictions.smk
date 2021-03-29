@@ -56,6 +56,8 @@ rule GetDelRegions:
         conf.vcf.output
     output:
         f'{conf.outdir}/bed/{{sample}}-del-regions.bed'
+    conda:
+        'envs/samplot.yaml'
     shell:
         f"""
         [[ ! -d {conf.outdir}/bed ]] && mkdir {conf.outdir}/bed
