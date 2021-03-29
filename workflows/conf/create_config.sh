@@ -1,4 +1,5 @@
 #!/bin/env bash
+set -eu
 
 while (( "$#" )); do
     case "$1" in
@@ -18,7 +19,7 @@ while (( "$#" )); do
             vcf=$2
             shift 2;;
         -o|--outdir)
-            vcf=$2
+            outdir=$2
             shift 2;;
         --) # end argument parsing
             shift
@@ -58,6 +59,5 @@ echo "vcf:"
 printf "  data_source: \"s3\"\n"
 printf "  file: \"$vcf\"\n"
 
-echo "image_filename_delimiter: \"$delimiter\""
 echo "image_filename_delimiter: \"$delimiter\""
 echo "outdir: \"$outdir\""
