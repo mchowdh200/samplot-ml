@@ -42,7 +42,7 @@ bams=$(ls $bam_bucket | grep -E '*.bam$')
 # get the sample name from the bam header
 for bam in $bams; do
     sample=$(samtools view -H $bam_bucket/$bam | grep SM |
-             awk 'BEGIN{RS="\t"; FS=":"} /SM/ {print}')
+             awk 'BEGIN{RS="\t"; FS=":"} /SM/ {print $2}')
     printf "  $sample: \"$bam_bucket/$bam\"\n"
 done
 
