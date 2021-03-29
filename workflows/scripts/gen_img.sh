@@ -45,9 +45,11 @@ done
 # out=$outdir/${chrom}_${end}_${sample}_${genotype}.png
 out=$outdir/$(echo "$chrom $end $sample $genotype.png" | tr ' ' $delimiter)
 svlen=$(($end-$start))
+window=$(python -c "print(int($svlen * 0.5))")
 
 if [[ $svlen -gt 5000 ]]; then
     samplot plot \
+        --window $window \
         --zoom 1000 \
         --chrom $chrom --start $start --end $end \
         --include_mqual $min_mq \
@@ -57,6 +59,7 @@ if [[ $svlen -gt 5000 ]]; then
         --output_file $out
 else
     samplot plot \
+        --window $window \
         --chrom $chrom --start $start --end $end \
         --include_mqual $min_mq \
         --sv_type DEL \
