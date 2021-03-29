@@ -16,7 +16,7 @@ while (( "$#" )); do
             vcf=$2
             shift 2;;
         -d|--delimiter)
-            vcf=$2
+            delimiter=$2
             shift 2;;
         -o|--outdir)
             outdir=$2
