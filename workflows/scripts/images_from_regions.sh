@@ -41,6 +41,6 @@ done
 # chrom start end svtype sample
 echo $PWD
 cat $regions | $gargs_bin -e -p $processes "bash scripts/gen_img.sh \\
-    --chrom {0} --start {1} --end {2} --genotype {3} \\
+    --chrom {0} --start {1} --end {2} --genotype {3} --sample {4} \\
     --min-mqual 10 --fasta $fasta --bam $bam \\
     --delimiter $delimiter --outdir $outdir"

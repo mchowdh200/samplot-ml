@@ -43,7 +43,7 @@ while (( "$#" )); do
 done
 
 # out=$outdir/${chrom}_${end}_${sample}_${genotype}.png
-out=$outdir/$(echo "$chrom $end $sample $genotype.png" | tr ' ' $delimiter)
+out=$outdir/$(echo "$chrom $start $end $sample $genotype.png" | tr ' ' $delimiter)
 svlen=$(($end-$start))
 window=$(python -c "print(int($svlen * 0.5))")
 
