@@ -15,5 +15,5 @@ sample=$2
 
 # note use single & for within sample logic
 bcftools view -s $sample -i 'SVTYPE="DEL"' $vcf |
-    bcftools query -e 'GT!="0/0" & GT!="./."' \
+    bcftools query -i 'GT!="0/0" & GT!="./."' \
         -f '%CHROM\t%POS\t%INFO/END\t%SVTYPE\t[%SAMPLE]\n'
