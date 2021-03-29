@@ -167,7 +167,7 @@ rule PredictImages:
     input:
         f'{conf.outdir}/{{sample}}-cropped-imgs.txt'
     output:
-        temp(f'{conf.outdir}/{{sample}}-predictions.bed')
+        f'{conf.outdir}/{{sample}}-predictions.bed'
     conda:
         'envs/tensorflow.yaml'
     shell:
