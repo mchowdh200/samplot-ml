@@ -58,7 +58,7 @@ if [[ $svlen -gt 5000 ]]; then
 else
     samplot plot \
         --chrom $chrom --start $start --end $end \
-        --min_mqual  $min_mq \
+        --minq  $min_mq \
         --sv_type DEL \
         --bams $bam \
         --reference $fasta \
