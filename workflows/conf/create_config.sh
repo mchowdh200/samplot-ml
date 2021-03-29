@@ -47,6 +47,7 @@ for bam in $bams; do
 done
 
 ### reference fasta and index
+### TODO fix the s3 or local choice
 echo "fasta:"
 printf "  data_source: \"s3\"\n"
 printf "  file: \"$fasta\"\n"

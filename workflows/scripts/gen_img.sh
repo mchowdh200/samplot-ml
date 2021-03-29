@@ -1,5 +1,5 @@
 #!/bin/env bash
-set -e
+set -eu
 
 while (( "$#" )); do
     case "$1" in
@@ -67,6 +67,3 @@ else
         --reference $fasta \
         --output_file $out
 fi
-
-
-
