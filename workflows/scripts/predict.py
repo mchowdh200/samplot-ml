@@ -36,7 +36,7 @@ if __name__ == '__main__':
         '--batch-size', dest='batch_size', type=int, required=True,
         help='number of images per patch.')
     parser.add_argument(
-        '--delimiter', dest='delimiter', type=int, required=True,
+        '--delimiter', dest='delimiter', type=str, required=True,
         help='delimiter within image file name.')
     args = parser.parse_args()
     main(args)
