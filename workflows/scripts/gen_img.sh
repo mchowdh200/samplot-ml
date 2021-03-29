@@ -50,7 +50,7 @@ if [[ $svlen -gt 5000 ]]; then
     samplot plot \
         --zoom 1000 \
         --chrom $chrom --start $start --end $end \
-        --minq  $min_mq \
+        --include_mqual $min_mq \
         --sv_type DEL \
         --bams $bam \
         --reference $fasta \
@@ -58,7 +58,7 @@ if [[ $svlen -gt 5000 ]]; then
 else
     samplot plot \
         --chrom $chrom --start $start --end $end \
-        --minq  $min_mq \
+        --include_mqual $min_mq \
         --sv_type DEL \
         --bams $bam \
         --reference $fasta \
