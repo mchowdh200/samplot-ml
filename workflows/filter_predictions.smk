@@ -152,7 +152,6 @@ rule CreateImageList:
                 out.write(f'{image_file}\n')
 
 
-## TODO
 rule PredictImages:
     """
     TODO fixed model path for now
@@ -175,6 +174,7 @@ rule PredictImages:
         """
         python scripts/predict.py \\
             --image-list {input} \\
+            --delimiter {conf.delimiter} \\
             --processes {threads} \\
             --batch-size {threads} \\
             --model-path saved_models/samplot-ml.h5 \\
