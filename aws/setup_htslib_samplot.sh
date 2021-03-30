@@ -8,7 +8,7 @@ sudo apt-get update
 sudo apt-get install -y \
     build-essential curl git libcurl4-openssl-dev wget \
     software-properties-common automake libtool pkg-config libssl-dev \
-    ncurses-dev awscli python-pip libbz2-dev liblzma-dev unzip
+    ncurses-dev awscli python-pip libbz2-dev liblzma-dev unzip zlib1g-dev
 
 ## mount storage
 export TMPDIR=/mnt/local/temp
