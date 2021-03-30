@@ -72,3 +72,43 @@ conda install -y -c conda-forge mamba
 
 ## setup snakemake
 mamba create -c conda-forge -c bioconda -y -n snakemake snakemake boto3
+
+## setup htslib
+cd /mnt/local
+wget https://github.com/samtools/htslib/releases/download/1.9/htslib-1.9.tar.bz2
+bunzip2 htslib-1.9.tar.bz2
+tar -xvf htslib-1.9.tar
+cd htslib-1.9
+autoheader
+autoconf
+./configure --enable-libcurl --enable-s3
+make
+sudo make install
+echo "export LD_LIBRARY_PATH=/usr/local/lib" >> ~/.profile
+echo "export HTSLIB_LIBRARY_DIR=/usr/local/lib" >> ~/.profile
+echo "export HTSLIB_INCLUDE_DIR=/usr/local/include" >> ~/.profile
+cd -
+
+## setup samtools
+wget https://github.com/samtools/samtools/releases/download/1.9/samtools-1.9.tar.bz2
+bunzip2 samtools-1.9.tar.bz2
+tar -xvf samtools-1.9.tar
+cd samtools-1.9
+autoheader
+autoconf -Wno-syntax
+./configure --with-htslib=system --enable-configure-htslib
+make
+sudo make install
+cd -
+
+## setup bcftools
+wget https://github.com/samtools/bcftools/releases/download/1.9/bcftools-1.9.tar.bz2
+bunzip2 bcftools-1.9.tar.bz2
+tar -xvf bcftools-1.9.tar
+cd bcftools-1.9
+autoheader
+autoconf -Wno-syntax
+./configure --with-htslib=system --enable-configure-htslib
+make
+sudo make install
+cd -
