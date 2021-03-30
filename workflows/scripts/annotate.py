@@ -14,7 +14,7 @@ genotypes = {0: (0, 0), 1: (0, 1), 2: (1, 1)}
 
 # go through the predictions bed file
 # and get the predictions keyed by region
-for l in open(bed_file, 'r'):
+for l in open(bed, 'r'):
     A = l.rstrip().split()
     region = '\t'.join(A[:3])
     predictions[region] = [float(x) for x in A[3:]] # prediction score
