@@ -18,7 +18,8 @@ conf = Conf(config)
 ################################################################################
 rule All:
     input:
-        expand(f'{conf.outdir}/{{sample}}-predictions.bed', sample=conf.samples)
+        expand(f'{conf.outdir}/samplot-ml-results/{{sample}}-samplot-ml.vcf.gz',
+               sample=conf.samples)
 
 
 gargs = f'{conf.outdir}/bin/gargs'
@@ -185,9 +186,24 @@ rule PredictImages:
 ## TODO
 ################################################################################
 # use annotate.py to output the ml vcf
-# change annotate.py to not filter out 0/0 genotypes
-# try adding format fields for old gt and p_ref, p_het, p_alt
+# TODO change annotate.py to not filter out 0/0 genotypes
+# TODO try adding format fields for old gt and p_ref, p_het, p_alt
+# * TODO pipe sample vcf into the script (stdin)
 rule AnnotateVCF:
+    input:
+        vcf = conf.vcf.output,
+        bed = f'{conf.outdir}/{{sample}}-predictions.bed'
+    output:
+        f'{conf.outdir}/samplot-ml-results/{{sample}}-samplot-ml.vcf.gz'
+    conda:
+        'envs/samplot.yaml'
+    shell:
+        """
+        bcftools -s {wildcards.sample} {input.vcf} |
+        python annotate.py {input.bed} {wildcards.sample} |
+        bgzip -c > {output}
+        """
+        
 
 
 
