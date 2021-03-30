@@ -199,6 +199,7 @@ rule AnnotateVCF:
         'envs/samplot.yaml'
     shell:
         """
+        [[ ! -d {conf.outdir}/samplot-ml-results ]] && mkdir {conf.outdir}/samplot-ml-results
         bcftools -s {wildcards.sample} {input.vcf} |
         python annotate.py {input.bed} {wildcards.sample} |
         bgzip -c > {output}
