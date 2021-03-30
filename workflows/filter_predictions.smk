@@ -201,7 +201,7 @@ rule AnnotateVCF:
         """
         [[ ! -d {conf.outdir}/samplot-ml-results ]] && mkdir {conf.outdir}/samplot-ml-results
         bcftools view -s {wildcards.sample} {input.vcf} |
-        python annotate.py {input.bed} {wildcards.sample} |
+        python scripts/annotate.py {input.bed} {wildcards.sample} |
         bgzip -c > {output}
         """
         
