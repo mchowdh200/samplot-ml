@@ -112,3 +112,10 @@ autoconf -Wno-syntax
 make
 sudo make install
 cd -
+
+## setup pysam/samplot
+mamba install -n snakemake cython numpy
+wget https://github.com/pysam-developers/pysam/archive/refs/tags/v0.15.2.tar.gz -O /mnt/local/pysam.tar.gz
+tar xvzf /mnt/local/pysam.tar.gz -C /mnt/local
+git clone https://github.com/mchowdh200/samplot.git /mnt/local/samplot
+/mnt/local/snakemake/bin/pip install -e /mnt/local/samplot/
