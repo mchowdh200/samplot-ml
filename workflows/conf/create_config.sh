@@ -33,10 +33,10 @@ done
 echo "samples:"
 
 # filenames
-#bams=$(aws s3 ls $bam_bucket | grep -E '*.bam$' | sed -E 's/\s+/\t/g' | cut -f4)
+bams=$(aws s3 ls $bam_bucket | grep -E '*.bam$' | sed -E 's/\s+/\t/g' | cut -f4)
 # OR do the same thing with a local directory of bams
 # TODO for now I'm just going to download bams locally and create this config
-bams=$(ls $bam_bucket | grep -E '*.bam$')
+# bams=$(ls $bam_bucket | grep -E '*.bam$')
 
 ### Sample bam pairs
 # get the sample name from the bam header
