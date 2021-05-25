@@ -8,9 +8,6 @@ sample = sys.argv[2]
 predictions = {}
 genotypes = {0: (0, 0), 1: (0, 1), 2: (1, 1)}
 
-# TODO create a new format field for OLD_GT
-# TODO create a new INFO field for the prediction scores
-
 
 # go through the predictions bed file
 # and get the predictions keyed by region
@@ -45,11 +42,10 @@ with pysam.VariantFile('-', 'rb') as VCF:
         region = '\t'.join([str(x) for x in [variant.contig,
                                           variant.pos,
                                           variant.stop]]) 
+        oldgt = variant.samples[sample].allele_indices
+        variant.samples[sample]["OLDGT"] = f"{oldgt[0]}/{oldgt[1]}"
         if region in predictions:
-            # annotate old gt, pref, phet, palt
-            oldgt = variant.samples[sample].allele_indices
             pref, phet, palt = predictions[region]
-            variant.samples[sample]["OLDGT"] = f"{oldgt[0]}/{oldgt[1]}"
             variant.samples[sample]["PREF"] = pref
             variant.samples[sample]["PHET"] = phet
             variant.samples[sample]["PALT"] = palt
@@ -57,4 +53,8 @@ with pysam.VariantFile('-', 'rb') as VCF:
             # set new GT
             variant.samples[sample].allele_indices = genotypes[
                 np.argmax(predictions[region])]
-            print(str(variant).rstrip())
+        else:
+            variant.samples[sample]["PREF"] = "."
+            variant.samples[sample]["PHET"] = "."
+            variant.samples[sample]["PALT"] = "."
+        print(str(variant).rstrip())

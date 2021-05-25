@@ -66,7 +66,6 @@ rule GetDelRegions:
         """
 
 
-### TODO seems a bit messy
 def get_images(rule, wildcards):
     """
     Return list of output images from the GenerateImages/CropImages checkpoints
@@ -124,8 +123,6 @@ checkpoint CropImages:
         gargs_bin = gargs,
         imgs = functools.partial(get_images, 'GenerateImages')
     output:
-        # [f'{conf.outdir}/crop/{{sample}}/{os.path.basename(image)}'
-        #  for image in get_images()]
         directory(f'{conf.outdir}/crop/{{sample}}')
     conda:
         'envs/samplot.yaml'
@@ -183,12 +180,6 @@ rule PredictImages:
         """
 
 
-## TODO
-################################################################################
-# use annotate.py to output the ml vcf
-# TODO change annotate.py to not filter out 0/0 genotypes
-# TODO try adding format fields for old gt and p_ref, p_het, p_alt
-# * TODO pipe sample vcf into the script (stdin)
 rule AnnotateVCF:
     input:
         vcf = conf.vcf.output,
