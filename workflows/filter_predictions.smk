@@ -97,8 +97,9 @@ checkpoint GenerateImages:
         directory(f'{conf.outdir}/img/{{sample}}')
     params:
         bam = lambda wildcards: conf.alignments[wildcards.sample]
-    conda:
-        'envs/samplot.yaml'
+    # TODO use the system installed pysam/samplot so that s3 bams can be used
+    # conda:
+    #     'envs/samplot.yaml'
     shell:
         # TODO put the gen_img.sh script into a function in images_from_regions.sh
         f"""
