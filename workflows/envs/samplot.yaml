@@ -8,8 +8,7 @@ dependencies:
   - numpy
   - cython
   - bcftools
-  - bzip2
-  - zlib
+  - htslib
   - imagemagick
   - joblib
   - samplot
