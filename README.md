@@ -7,6 +7,9 @@ Samplot-ML is a convolutional neural network  trained to identify false positive
 
 This Repository provides a snakemake workflow for annotating an SV callset with Samplot-ML's predictions.
 
+To cite Samplot-ML, please use
+>Belyeu, J.R., Chowdhury, M., Brown, J. et al. Samplot: a platform for structural variant visual validation and automated filtering. Genome Biol 22, 161 (2021). https://doi.org/10.1186/s13059-021-02380-5
+
 ## Dependencies
 * `bz2` and `zlib` devel libraries.  On Ubuntu systems, you can use: 
 ```
