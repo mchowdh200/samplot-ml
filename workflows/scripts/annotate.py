@@ -54,7 +54,7 @@ with pysam.VariantFile('-', 'rb') as VCF:
             variant.samples[sample].allele_indices = genotypes[
                 np.argmax(predictions[region])]
         else:
-            variant.samples[sample]["PREF"] = "."
-            variant.samples[sample]["PHET"] = "."
-            variant.samples[sample]["PALT"] = "."
+            variant.samples[sample]["PREF"] = float("nan")
+            variant.samples[sample]["PHET"] = float("nan")
+            variant.samples[sample]["PALT"] = float("nan")
         print(str(variant).rstrip())
