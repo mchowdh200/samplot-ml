@@ -147,9 +147,9 @@ rule CreateImageList:
     output:
         temp(f'{conf.outdir}/{{sample}}-cropped-imgs.txt')
     run:
-        # with open(output[0], 'w') as out:
+        with open(output[0], 'w') as out:
             # for image_file in input:
-            for image_file in glob('{output[0]}/*.png'):
+            for image_file in glob('{input[0]}/*.png'):
                 out.write(f'{image_file}\n')
 
 
