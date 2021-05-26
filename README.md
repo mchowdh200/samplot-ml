@@ -1,4 +1,5 @@
 # Samplot-ML
+[![DOI](https://zenodo.org/badge/191653284.svg)](https://zenodo.org/badge/latestdoi/191653284)
 
 [Samplot](https://github.com/ryanlayer/samplot) is a command line tool for rapid, multi-sample structural variant visualization. samplot takes SV coordinates and bam files and produces high-quality images that highlight any alignment and depth signals that substantiate the SV.
 
