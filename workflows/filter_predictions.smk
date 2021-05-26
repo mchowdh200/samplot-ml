@@ -81,7 +81,7 @@ def get_images(rule, wildcards):
     return glob(f'{image_dir}/*.png')
 
 
-checkpoint GenerateImages:
+rule GenerateImages:
     """
     Images from del regions for a given sample.
     """
@@ -114,14 +114,15 @@ checkpoint GenerateImages:
         """
 
 
-checkpoint CropImages:
+rule CropImages:
     """
     Crop axes and text from images to prepare for samplot-ml input
     """
     threads: workflow.cores
     input:
         gargs_bin = gargs,
-        imgs = functools.partial(get_images, 'GenerateImages')
+        imgs = rules.GenerateImages.output
+        # imgs = functools.partial(get_images, 'GenerateImages')
     output:
         directory(f'{conf.outdir}/crop/{{sample}}')
     conda:
@@ -129,7 +130,7 @@ checkpoint CropImages:
     shell:
         f"""
         [[ ! -d {conf.outdir}/crop ]] && mkdir {conf.outdir}/crop
-        bash scripts/crop.sh -i {conf.outdir}/img/{{wildcards.sample}} \\
+        bash scripts/crop.sh -i {{input.imgs}} \\
                              -o {{output}} \\
                              -p {{threads}} \\
                              -g {{input.gargs_bin}}
@@ -141,12 +142,14 @@ rule CreateImageList:
     of a sample's cropped images and puts them in a text file.
     """
     input:
-        functools.partial(get_images, 'CropImages')
+        #functools.partial(get_images, 'CropImages')
+        rules.CropImages.output
     output:
         temp(f'{conf.outdir}/{{sample}}-cropped-imgs.txt')
     run:
-        with open(output[0], 'w') as out:
-            for image_file in input:
+        # with open(output[0], 'w') as out:
+            # for image_file in input:
+            for image_file in glob('{output[0]}/*.png')
                 out.write(f'{image_file}\n')
 
 
