@@ -115,4 +115,4 @@ chr1-934098-934868-HG03687.png	0/1	1/1
 ```
 
 It seems that in the very first deletion we came across, there was a difference between SVTyper's prediction and Samplot-ML's prediction.  We went from a heterozygous deletion (0/1) to a homozygous alternate deletion (1/1).  Let's take a look at the image in question.
-![samplot-image](./figures/chr1-934098-934868-HG03687.png) 
+![samplot-image](https://github.com/mchowdh200/samplot-ml/raw/master/figures/chr1-934098-934868-HG03687-DEL.png) 
