@@ -102,7 +102,7 @@ checkpoint GenerateImages:
     shell:
         # TODO put the gen_img.sh script into a function in images_from_regions.sh
         f"""
-        [[ ! -d {conf.outdir}/img ]] && mkdir {conf.outdir}/img
+        mkdir -p {conf.outdir}/img
         bash scripts/images_from_regions.sh \\
             --gargs-bin {{input.gargs_bin}} \\
             --fasta {{input.fasta}} \\

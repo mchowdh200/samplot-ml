@@ -39,5 +39,5 @@ while (( "$#" )); do
     esac
 done
 
-[[ ! -d $outdir ]] && mkdir $outdir
+mkdir -p $outdir
 find $imgdir -name '*.png' | $gargs_bin -e -p $processes "crop {0} $outdir"
