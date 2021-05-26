@@ -40,4 +40,4 @@ while (( "$#" )); do
 done
 
 mkdir -p $outdir
-find $imgdir -name '*.png' | $gargs_bin -e -p $processes "crop {0} $outdir"
+find $imgdir -name '*.png' | $gargs_bin -p $processes "crop {0} $outdir"
