@@ -97,9 +97,8 @@ checkpoint GenerateImages:
         directory(f'{conf.outdir}/img/{{sample}}')
     params:
         bam = lambda wildcards: conf.alignments[wildcards.sample]
-    # TODO use the system installed pysam/samplot so that s3 bams can be used
-    # conda:
-    #     'envs/samplot.yaml'
+    conda:
+        'envs/samplot.yaml'
     shell:
         # TODO put the gen_img.sh script into a function in images_from_regions.sh
         f"""
@@ -153,11 +152,6 @@ rule CreateImageList:
 
 rule PredictImages:
     """
-    TODO fixed model path for now
-    TODO figure out how to do multithreading cpu with tensorflow (might be automatic?)
-    TODO figure out memory usage of cpu based model and how it scales with batch size
-    TODO put batch size into config?
-    TODO setup config to handle gpu/cpu in the conda and resources directives
     Feed images into samplot-ml to get a bed file of predictions.
     Prediction format (tab separated):
         - chrm start end p_ref p_het p_alt
