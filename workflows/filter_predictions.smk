@@ -149,7 +149,7 @@ rule CreateImageList:
     run:
         # with open(output[0], 'w') as out:
             # for image_file in input:
-            for image_file in glob('{output[0]}/*.png')
+            for image_file in glob('{output[0]}/*.png'):
                 out.write(f'{image_file}\n')
 
 
